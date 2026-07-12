@@ -15,8 +15,12 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "AssetFlow Odoo",
-  description: "Enterprise Asset Resource Management System",
+  title: "AssetFlow",
+  description: "Enterprise Asset & Resource Management System",
+  icons: {
+    icon: "/brand/icon.png",
+    apple: "/brand/icon.png",
+  },
 };
 
 export default function RootLayout({
@@ -28,8 +32,9 @@ export default function RootLayout({
     <html
       lang="en"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      suppressHydrationWarning
     >
-      <body className="min-h-full flex flex-col">
+      <body className="min-h-full flex flex-col" suppressHydrationWarning>
         <Providers>
           {children}
         </Providers>

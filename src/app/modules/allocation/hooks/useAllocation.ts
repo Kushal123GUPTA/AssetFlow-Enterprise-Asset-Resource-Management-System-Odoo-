@@ -1,6 +1,11 @@
 import { create } from "zustand";
 import axios from "axios";
-import type { Allocation, AllocationFilters, EmployeeOption, DepartmentOption } from "../types/allocation.types";
+import type {
+  Allocation,
+  AllocationFilters,
+  EmployeeOption,
+  DepartmentOption,
+} from "../types/allocation.types";
 
 const API = {
   GET: "/api/assets/allocations",
@@ -54,7 +59,10 @@ export const useAllocationStore = create<AllocationStore>((set, get) => ({
       const res = await axios.post(API.GET, f);
       set({ allocations: res.data.data, loading: false });
     } catch (err: any) {
-      set({ error: err.response?.data?.error ?? "Failed to fetch allocations", loading: false });
+      set({
+        error: err.response?.data?.error ?? "Failed to fetch allocations",
+        loading: false,
+      });
     }
   },
 
@@ -75,7 +83,6 @@ export const useAllocationStore = create<AllocationStore>((set, get) => ({
   allocateAsset: async (data) => {
     try {
       await axios.post(API.ALLOCATE, data);
-      // Refresh the allocations list after successful allocation
       await get().fetchAllocations();
       return true;
     } catch (err: any) {
@@ -87,7 +94,6 @@ export const useAllocationStore = create<AllocationStore>((set, get) => ({
   returnAsset: async (data) => {
     try {
       await axios.post(API.RETURN, data);
-      // Refresh allocations list after successful return
       await get().fetchAllocations();
       return true;
     } catch (err: any) {
