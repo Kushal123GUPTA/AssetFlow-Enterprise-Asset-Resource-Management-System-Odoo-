@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/authOptions";
 import { db } from "@/db";
 import { assets, assetAllocations, assetStatusHistory } from "@/db/schema";
 import { eq, and, isNull } from "drizzle-orm";
+import { notifyEmployee } from "@/lib/notifications";
 
 // POST /api/assets/allocate — Allocate an asset
 export async function POST(req: NextRequest) {
@@ -67,6 +68,21 @@ export async function POST(req: NextRequest) {
       changedBy: session.user.id,
       reason: employeeId ? "Allocated to employee" : "Allocated to department",
     });
+
+    if (employeeId) {
+      const [assetMeta] = await db
+        .select({ name: assets.name, assetTag: assets.assetTag })
+        .from(assets)
+        .where(eq(assets.id, assetId))
+        .limit(1);
+      await notifyEmployee({
+        employeeId,
+        type: "asset_assigned",
+        message: `Asset assigned: ${assetMeta?.assetTag ?? ""} ${assetMeta?.name ?? ""}`.trim(),
+        relatedEntityType: "allocation",
+        relatedEntityId: insertedAllocation[0].id,
+      });
+    }
 
     return NextResponse.json({ data: insertedAllocation[0] });
   } catch (error: any) {

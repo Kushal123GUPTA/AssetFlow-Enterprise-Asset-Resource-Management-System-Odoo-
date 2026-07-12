@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/authOptions";
 import { db } from "@/db";
 import { assets, assetAllocations, transferRequests, assetStatusHistory } from "@/db/schema";
 import { eq, and, isNull } from "drizzle-orm";
+import { notifyEmployee, notifyEmployees } from "@/lib/notifications";
 
 // POST /api/assets/transfer-approve — Approve and process a transfer request
 export async function POST(req: NextRequest) {
@@ -109,6 +110,22 @@ export async function POST(req: NextRequest) {
       toStatus: "allocated",
       changedBy: session.user.id,
       reason: `Custodian transfer approved. Request #${transferId}`,
+    });
+
+    const [assetMeta] = await db
+      .select({ name: assets.name, assetTag: assets.assetTag })
+      .from(assets)
+      .where(eq(assets.id, transfer.assetId))
+      .limit(1);
+
+    const recipients = [transfer.fromEmployeeId, transfer.toEmployeeId].filter(
+      (id): id is string => Boolean(id)
+    );
+    await notifyEmployees(recipients, {
+      type: "transfer_approved",
+      message: `Transfer approved for ${assetMeta?.assetTag ?? "asset"} — ${assetMeta?.name ?? "item"}.`,
+      relatedEntityType: "transfer_request",
+      relatedEntityId: transferId,
     });
 
     return NextResponse.json({ data: { success: true, allocationId: newAllocId } });

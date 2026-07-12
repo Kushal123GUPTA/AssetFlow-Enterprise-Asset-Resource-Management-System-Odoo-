@@ -2,10 +2,11 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/authOptions";
 import { db } from "@/db";
-import { maintenanceRequests, assets } from "@/db/schema";
+import { assets, maintenanceRequests } from "@/db/schema";
 import { eq } from "drizzle-orm";
+import { notifyEmployee } from "@/lib/notifications";
 
-// POST /api/assets/maintenance/reject — Reject a pending maintenance ticket
+/** Reject pending ticket — does not touch asset status (raise no longer flips it). */
 export async function POST(req: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
@@ -18,8 +19,23 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Request ID is required" }, { status: 400 });
     }
 
-    // Update maintenance request status
-    const updated = await db
+    const [existing] = await db
+      .select()
+      .from(maintenanceRequests)
+      .where(eq(maintenanceRequests.id, requestId))
+      .limit(1);
+
+    if (!existing) {
+      return NextResponse.json({ error: "Request not found" }, { status: 404 });
+    }
+    if (existing.status !== "pending") {
+      return NextResponse.json(
+        { error: "Only pending requests can be rejected" },
+        { status: 400 }
+      );
+    }
+
+    const [updated] = await db
       .update(maintenanceRequests)
       .set({
         status: "rejected",
@@ -31,18 +47,28 @@ export async function POST(req: NextRequest) {
       .where(eq(maintenanceRequests.id, requestId))
       .returning();
 
-    if (updated.length > 0) {
-      const ticket = updated[0];
-      // Revert asset back to available if it was marked under maintenance
-      await db
-        .update(assets)
-        .set({ status: "available" })
-        .where(eq(assets.id, ticket.assetId));
-    }
+    const [asset] = await db
+      .select({ name: assets.name, assetTag: assets.assetTag })
+      .from(assets)
+      .where(eq(assets.id, updated.assetId))
+      .limit(1);
 
-    return NextResponse.json({ data: updated[0] });
+    await notifyEmployee({
+      employeeId: updated.raisedBy,
+      type: "maintenance_rejected",
+      message: `Maintenance rejected for ${asset?.assetTag ?? "asset"}${
+        rejectionReason ? `: ${rejectionReason}` : "."
+      }`,
+      relatedEntityType: "maintenance_request",
+      relatedEntityId: updated.id,
+    });
+
+    return NextResponse.json({ data: updated });
   } catch (error: any) {
     console.error("REJECT maintenance error:", error);
-    return NextResponse.json({ error: error.message ?? "Internal Server Error" }, { status: 500 });
+    return NextResponse.json(
+      { error: error.message ?? "Internal Server Error" },
+      { status: 500 }
+    );
   }
 }

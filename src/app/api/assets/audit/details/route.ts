@@ -67,14 +67,21 @@ export async function POST(req: NextRequest) {
       .from(auditItems)
       .where(and(eq(auditItems.auditCycleId, auditCycleId), isNull(auditItems.deletedAt)));
 
-    let enrichedItems: any[] = [];
+    type EnrichedAuditItem = (typeof items)[number] & {
+      assetTag: string;
+      assetName: string;
+      assetLocation: string;
+      verifiedByName: string | null;
+    };
+
+    let enrichedItems: EnrichedAuditItem[] = [];
     if (items.length > 0) {
       const assetIds = [...new Set(items.map((i) => i.assetId))];
       const verifiedByEmployeeIds = [...new Set(items.map((i) => i.verifiedBy).filter(Boolean))] as string[];
 
       const [allAssets, allEmps] = await Promise.all([
         db.select({ id: assets.id, name: assets.name, assetTag: assets.assetTag, location: assets.location }).from(assets).where(inArray(assets.id, assetIds)),
-        verifiedByEmployeeIds.length > 0 ? db.select({ id: employees.id, name: employees.name }).from(employees).where(inArray(employees.id, verifiedByEmployeeIds)) : [],
+        verifiedByEmployeeIds.length > 0 ? db.select({ id: employees.id, name: employees.name }).from(employees).where(inArray(employees.id, verifiedByEmployeeIds)) : Promise.resolve([] as { id: string; name: string }[]),
       ]);
 
       const assetMap = new Map(allAssets.map((a) => [a.id, a]));

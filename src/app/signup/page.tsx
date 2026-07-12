@@ -31,6 +31,10 @@ export default function SignupPage() {
             Create an account
           </h2>
           <p className="mt-2 text-center text-sm text-gray-500">
+            New organizations: first account becomes Admin to set up roles.
+            Existing org name: signup creates an Employee account only.
+          </p>
+          <p className="mt-2 text-center text-sm text-gray-500">
             Already have an account?{" "}
             <Link href="/login" className="font-medium text-primary hover:text-primary-hover">
               Sign in here
