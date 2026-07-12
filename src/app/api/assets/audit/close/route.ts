@@ -2,10 +2,20 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/authOptions";
 import { db } from "@/db";
-import { assets, auditCycles, auditItems, assetStatusHistory } from "@/db/schema";
+import {
+  assets,
+  auditCycles,
+  auditItems,
+  assetStatusHistory,
+  auditCycleAuditors,
+} from "@/db/schema";
 import { eq, and, isNull } from "drizzle-orm";
+import {
+  reconcileDiscrepanciesForCycle,
+  upsertDiscrepancyReport,
+} from "@/lib/auditDiscrepancies";
+import { notifyEmployees } from "@/lib/notifications";
 
-// POST /api/assets/audit/close — Close/lock an audit campaign and reconcile discrepancies
 export async function POST(req: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
@@ -20,9 +30,12 @@ export async function POST(req: NextRequest) {
 
     const organizationId = session.user.organizationId;
 
-    // Verify audit campaign exists
-    const cycleRecord = await db
-      .select({ id: auditCycles.id, status: auditCycles.status })
+    const [cycle] = await db
+      .select({
+        id: auditCycles.id,
+        status: auditCycles.status,
+        name: auditCycles.name,
+      })
       .from(auditCycles)
       .where(
         and(
@@ -33,18 +46,41 @@ export async function POST(req: NextRequest) {
       )
       .limit(1);
 
-    if (cycleRecord.length === 0) {
+    if (!cycle) {
       return NextResponse.json({ error: "Audit cycle not found" }, { status: 404 });
     }
-
-    const cycle = cycleRecord[0];
     if (cycle.status === "closed") {
       return NextResponse.json({ error: "Audit cycle is already closed" }, { status: 400 });
     }
 
     const timestampNow = new Date().toISOString();
 
-    // 1. Mark campaign as closed
+    const flaggedItems = await db
+      .select({
+        id: auditItems.id,
+        assetId: auditItems.assetId,
+        status: auditItems.status,
+        notes: auditItems.notes,
+      })
+      .from(auditItems)
+      .where(
+        and(eq(auditItems.auditCycleId, auditCycleId), isNull(auditItems.deletedAt))
+      );
+
+    // Ensure discrepancy reports exist for every flagged item before lock
+    for (const item of flaggedItems) {
+      if (item.status === "missing" || item.status === "damaged") {
+        await upsertDiscrepancyReport({
+          auditItemId: item.id,
+          auditCycleId,
+          assetId: item.assetId,
+          discrepancyType: item.status,
+          notes: item.notes,
+          createdBy: session.user.id,
+        });
+      }
+    }
+
     await db
       .update(auditCycles)
       .set({
@@ -55,60 +91,92 @@ export async function POST(req: NextRequest) {
       })
       .where(eq(auditCycles.id, auditCycleId));
 
-    // 2. Fetch flagged auditItems to reconcile
-    const flaggedItems = await db
-      .select({
-        id: auditItems.id,
-        assetId: auditItems.assetId,
-        status: auditItems.status,
-        notes: auditItems.notes,
-      })
-      .from(auditItems)
+    let missingCount = 0;
+    let damagedCount = 0;
+
+    for (const item of flaggedItems) {
+      if (item.status === "missing") {
+        missingCount += 1;
+        const [asset] = await db
+          .select({ status: assets.status })
+          .from(assets)
+          .where(eq(assets.id, item.assetId))
+          .limit(1);
+        const fromStatus = asset?.status ?? "allocated";
+
+        await db
+          .update(assets)
+          .set({ status: "lost", updatedBy: session.user.id })
+          .where(eq(assets.id, item.assetId));
+
+        await db.insert(assetStatusHistory).values({
+          assetId: item.assetId,
+          fromStatus,
+          toStatus: "lost",
+          changedBy: session.user.id,
+          reason: `Audit campaign reconciliation. Asset marked as missing. Notes: ${item.notes ?? ""}`,
+        });
+      } else if (item.status === "damaged") {
+        damagedCount += 1;
+        const [asset] = await db
+          .select({ status: assets.status })
+          .from(assets)
+          .where(eq(assets.id, item.assetId))
+          .limit(1);
+        const fromStatus = asset?.status ?? "allocated";
+
+        await db
+          .update(assets)
+          .set({
+            status: "under_maintenance",
+            condition: "poor",
+            updatedBy: session.user.id,
+          })
+          .where(eq(assets.id, item.assetId));
+
+        await db.insert(assetStatusHistory).values({
+          assetId: item.assetId,
+          fromStatus,
+          toStatus: "under_maintenance",
+          changedBy: session.user.id,
+          reason: `Audit campaign reconciliation. Asset marked as damaged. Notes: ${item.notes ?? ""}`,
+        });
+      }
+    }
+
+    await reconcileDiscrepanciesForCycle(auditCycleId, session.user.id);
+
+    const auditors = await db
+      .select({ employeeId: auditCycleAuditors.employeeId })
+      .from(auditCycleAuditors)
       .where(
         and(
-          eq(auditItems.auditCycleId, auditCycleId),
-          isNull(auditItems.deletedAt)
+          eq(auditCycleAuditors.auditCycleId, auditCycleId),
+          isNull(auditCycleAuditors.deletedAt)
         )
       );
 
-    // 3. Reconcile assets status based on verification outcomes
-    await Promise.all(
-      flaggedItems.map(async (item) => {
-        if (item.status === "missing") {
-          // Reconcile to lost
-          await db
-            .update(assets)
-            .set({ status: "lost", updatedBy: session.user.id })
-            .where(eq(assets.id, item.assetId));
-
-          await db.insert(assetStatusHistory).values({
-            assetId: item.assetId,
-            fromStatus: "allocated",
-            toStatus: "lost",
-            changedBy: session.user.id,
-            reason: `Audit campaign reconciliation. Asset marked as missing. Notes: ${item.notes ?? ""}`,
-          });
-        } else if (item.status === "damaged") {
-          // Reconcile to under_maintenance
-          await db
-            .update(assets)
-            .set({ status: "under_maintenance", condition: "poor", updatedBy: session.user.id })
-            .where(eq(assets.id, item.assetId));
-
-          await db.insert(assetStatusHistory).values({
-            assetId: item.assetId,
-            fromStatus: "allocated",
-            toStatus: "under_maintenance",
-            changedBy: session.user.id,
-            reason: `Audit campaign reconciliation. Asset marked as damaged. Notes: ${item.notes ?? ""}`,
-          });
-        }
-      })
+    await notifyEmployees(
+      auditors.map((a) => a.employeeId),
+      {
+        type: "audit_cycle_closed",
+        message: `Audit “${cycle.name}” closed. ${missingCount} missing → Lost, ${damagedCount} damaged → Under Maintenance.`,
+        relatedEntityType: "audit_cycle",
+        relatedEntityId: auditCycleId,
+      }
     );
 
-    return NextResponse.json({ data: { success: true } });
+    return NextResponse.json({
+      data: {
+        success: true,
+        discrepancies: { missing: missingCount, damaged: damagedCount },
+      },
+    });
   } catch (error: any) {
     console.error("CLOSE audit cycle error:", error);
-    return NextResponse.json({ error: error.message ?? "Internal Server Error" }, { status: 500 });
+    return NextResponse.json(
+      { error: error.message ?? "Internal Server Error" },
+      { status: 500 }
+    );
   }
 }
