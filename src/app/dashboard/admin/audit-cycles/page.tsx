@@ -7,6 +7,8 @@ import {
 import { PlusOutlined, EditOutlined, DeleteOutlined, FileSearchOutlined } from "@ant-design/icons";
 import dayjs from "dayjs";
 import type { ColumnsType } from "antd/es/table";
+import Card from "@/app/shared/components/Card";
+import PageHeader, { PageShell } from "@/app/shared/components/PageHeader";
 
 interface AuditCycle {
   id: string;
@@ -134,30 +136,32 @@ export default function AuditCyclesPage() {
   ];
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto p-4 md:p-8">
-      {/* Header */}
-      <div className="bg-[#ffffff] p-6 rounded-2xl border border-[#e5e7eb] shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-[#111827] flex items-center gap-2">
-            <FileSearchOutlined className="text-[#ff6b00]" /> Audit Cycles
-          </h1>
-          <p className="text-[#6b7280] text-sm mt-1">Plan and manage asset audit cycles across the organization</p>
-        </div>
-        <Button type="primary" size="large" icon={<PlusOutlined />} onClick={openCreate} className="bg-[#ff6b00] hover:bg-[#e05e00] border-none shadow-md">
-          New Audit Cycle
-        </Button>
-      </div>
+    <PageShell>
+      <PageHeader
+        eyebrow="Compliance"
+        title={
+          <span className="inline-flex items-center gap-2">
+            <FileSearchOutlined className="text-primary" /> Audit Cycles
+          </span>
+        }
+        description="Plan and manage asset audit cycles across the organization"
+        actions={
+          <Button type="primary" size="large" icon={<PlusOutlined />} onClick={openCreate} className="border-none bg-primary shadow-md hover:bg-primary-hover">
+            New Audit Cycle
+          </Button>
+        }
+      />
 
-      <div className="bg-[#ffffff] rounded-2xl border border-[#e5e7eb] shadow-sm p-6 space-y-6">
+      <Card className="space-y-6">
         {/* Status summary */}
         <div className="flex gap-4 flex-wrap">
           {(["planned", "in_progress", "closed"] as const).map((s) => {
             const cnt = data.filter((d) => d.status === s).length;
             return (
-              <div key={s} className="flex items-center gap-2 px-4 py-2 rounded-xl bg-[#f8f9fa] border border-[#e5e7eb]">
+              <div key={s} className="flex items-center gap-2 px-4 py-2 rounded-xl bg-gray-950 border border-gray-800">
                 <Badge color={STATUS_COLOR[s]} />
-                <span className="text-[#6b7280] text-sm font-medium">{STATUS_LABEL[s]}</span>
-                <span className="font-bold text-[#111827] ml-1">{cnt}</span>
+                <span className="text-gray-500 text-sm font-medium">{STATUS_LABEL[s]}</span>
+                <span className="font-bold text-gray-100 ml-1">{cnt}</span>
               </div>
             );
           })}
@@ -170,9 +174,9 @@ export default function AuditCyclesPage() {
           loading={loading}
           pagination={{ pageSize: 10 }}
           bordered={false}
-          className="border border-[#e5e7eb] rounded-xl overflow-hidden"
+          className="overflow-hidden rounded-xl border border-gray-800"
         />
-      </div>
+      </Card>
 
       <Modal
         title={
@@ -217,6 +221,6 @@ export default function AuditCyclesPage() {
           )}
         </Form>
       </Modal>
-    </div>
+    </PageShell>
   );
 }

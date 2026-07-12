@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { signOut, useSession } from "next-auth/react";
 import {
@@ -20,7 +21,7 @@ import {
   Bell,
   LogOut,
   ChevronRight,
-  Plus
+  Plus,
 } from "lucide-react";
 
 type NavItem = {
@@ -78,75 +79,93 @@ export default function Sidebar() {
   const navItems = NAV_BY_ROLE[role] ?? NAV_BY_ROLE.employee;
 
   return (
-    <aside className="flex flex-col w-64 min-h-screen bg-white border-r border-[#f3f4f6] shrink-0 z-20">
-      {/* Brand Logo Section */}
-      <div className="h-20 flex items-center px-6 mt-2">
+    <aside className="z-20 flex w-64 shrink-0 flex-col border-r border-gray-800 bg-gray-900 min-h-screen">
+      <div className="mt-2 flex h-20 items-center px-6">
         <div className="flex items-center gap-3">
-          {/* Stylized Orange Logo (SubMan-style) */}
-          <div className="w-10 h-10 bg-primary rounded-xl flex items-center justify-center text-white font-black text-2xl shadow-md shadow-primary/20 transform rotate-6">
-            A
-          </div>
+          <Image
+            src="/brand/icon.png"
+            alt="AssetFlow"
+            width={40}
+            height={40}
+            className="rotate-6 rounded-xl shadow-md shadow-primary/20"
+            priority
+          />
           <div className="flex flex-col">
-            <span className="text-xl font-black text-[#111827] tracking-tight leading-none">AssetFlow</span>
-            <span className="text-[10px] font-bold text-[#6b7280] tracking-widest uppercase mt-1">
+            <span className="text-xl font-black leading-none tracking-tight text-gray-100">
+              AssetFlow
+            </span>
+            <span className="mt-1 text-[10px] font-bold uppercase tracking-widest text-gray-500">
               {ROLE_LABELS[role]}
             </span>
           </div>
         </div>
       </div>
 
-      {/* Prominent Action Button (+ Add Asset) */}
-      <div className="px-4 mb-4">
-        <button className="w-full h-11 bg-primary hover:bg-primary-hover text-white border-none rounded-xl font-bold shadow-lg shadow-primary/20 flex items-center justify-center gap-2 transition-all hover:scale-[1.02]">
-          <Plus className="w-4 h-4" />
-          <span>Add Asset</span>
-        </button>
-      </div>
+      {role !== "employee" && (
+        <div className="mb-4 px-4">
+          <button
+            type="button"
+            className="flex h-11 w-full items-center justify-center gap-2 rounded-xl border-none bg-primary font-bold text-white shadow-lg shadow-primary/20 transition-all hover:scale-[1.02] hover:bg-primary-hover"
+          >
+            <Plus className="h-4 w-4" />
+            <span>Add Asset</span>
+          </button>
+        </div>
+      )}
 
-      {/* User Info Widget */}
-      <div className="flex items-center gap-3 px-4 py-3 mx-3 mb-4 rounded-xl bg-gray-50 border border-[#f3f4f6]">
-        <div className="flex items-center justify-center w-9 h-9 rounded-full bg-primary-light text-primary font-bold text-sm shrink-0">
+      <div className="mx-3 mb-4 flex items-center gap-3 rounded-xl border border-gray-800 bg-gray-950 px-4 py-3">
+        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary-light text-sm font-bold text-primary">
           {session?.user?.name?.[0]?.toUpperCase() ?? "U"}
         </div>
         <div className="min-w-0">
-          <p className="text-gray-800 text-sm font-semibold truncate leading-tight">{session?.user?.name ?? "User"}</p>
-          <p className="text-[#6b7280] text-xs truncate mt-0.5">{session?.user?.email ?? ""}</p>
+          <p className="truncate text-sm font-semibold leading-tight text-gray-100">
+            {session?.user?.name ?? "User"}
+          </p>
+          <p className="mt-0.5 truncate text-xs text-gray-500">
+            {session?.user?.email ?? ""}
+          </p>
         </div>
       </div>
 
-      {/* Nav Menu */}
-      <nav className="flex-1 px-3 pt-2 pb-2 space-y-1 overflow-y-auto custom-scrollbar">
-        <p className="text-[#6b7280] text-[10px] font-bold uppercase tracking-wider px-3 mb-2">
+      <nav className="custom-scrollbar flex-1 space-y-1 overflow-y-auto px-3 pb-2 pt-2">
+        <p className="mb-2 px-3 text-[10px] font-bold uppercase tracking-wider text-gray-500">
           Navigation
         </p>
         {navItems.map((item) => {
           const Icon = item.icon;
-          const isActive = pathname === item.href || pathname.startsWith(item.href + "/");
+          const isActive =
+            pathname === item.href || pathname.startsWith(`${item.href}/`);
           return (
             <Link
               key={item.href}
               href={item.href}
-              className={`group flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium transition-all duration-150 ${
+              className={`group flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm font-medium transition-all duration-150 ${
                 isActive
-                  ? `bg-primary-light text-primary font-bold shadow-sm`
-                  : "text-[#374151] hover:text-[#111827] hover:bg-gray-50"
+                  ? "bg-primary-light font-bold text-primary shadow-sm"
+                  : "text-gray-400 hover:bg-gray-950 hover:text-gray-100"
               }`}
             >
-              <Icon className={`w-4 h-4 shrink-0 ${isActive ? "text-primary" : "text-[#6b7280] group-hover:text-[#374151]"}`} />
+              <Icon
+                className={`h-4 w-4 shrink-0 ${
+                  isActive
+                    ? "text-primary"
+                    : "text-gray-500 group-hover:text-gray-300"
+                }`}
+              />
               <span className="flex-1">{item.label}</span>
-              {isActive && <ChevronRight className="w-3.5 h-3.5 text-primary" />}
+              {isActive ? <ChevronRight className="h-3.5 w-3.5 text-primary" /> : null}
             </Link>
           );
         })}
       </nav>
 
-      {/* Sign out */}
-      <div className="px-3 pb-5 border-t border-[#f3f4f6] pt-4">
+      <div className="border-t border-gray-800 px-3 pb-5 pt-4">
         <button
+          type="button"
           onClick={() => signOut({ callbackUrl: "/login" })}
-          className="flex items-center gap-3 w-full px-4 py-2.5 rounded-xl text-sm font-medium text-[#4b5563] hover:text-red-500 hover:bg-red-50 transition-all duration-150"
+          className="flex w-full items-center gap-3 rounded-xl px-4 py-2.5 text-sm font-medium text-gray-400 transition-all duration-150 hover:bg-red-50 hover:text-red-500"
         >
-          <LogOut className="w-4 h-4 shrink-0" />
+          <LogOut className="h-4 w-4 shrink-0" />
           <span>Sign Out</span>
         </button>
       </div>

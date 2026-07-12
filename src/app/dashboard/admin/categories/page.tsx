@@ -6,6 +6,8 @@ import {
 } from "antd";
 import { PlusOutlined, EditOutlined, DeleteOutlined, AppstoreOutlined } from "@ant-design/icons";
 import type { ColumnsType } from "antd/es/table";
+import Card from "@/app/shared/components/Card";
+import PageHeader, { PageShell } from "@/app/shared/components/PageHeader";
 
 interface Category {
   id: string;
@@ -113,21 +115,23 @@ export default function CategoriesPage() {
   ];
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto p-4 md:p-8">
-      {/* Header */}
-      <div className="bg-[#ffffff] p-6 rounded-2xl border border-[#e5e7eb] shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-[#111827] flex items-center gap-2">
-            <AppstoreOutlined className="text-[#ff6b00]" /> Asset Categories
-          </h1>
-          <p className="text-[#6b7280] text-sm mt-1">Define the category hierarchy for all your assets.</p>
-        </div>
-        <Button type="primary" size="large" icon={<PlusOutlined />} onClick={openCreate} className="bg-[#ff6b00] hover:bg-[#e05e00] border-none shadow-md">
-          New Category
-        </Button>
-      </div>
+    <PageShell>
+      <PageHeader
+        eyebrow="Organization"
+        title={
+          <span className="inline-flex items-center gap-2">
+            <AppstoreOutlined className="text-primary" /> Asset Categories
+          </span>
+        }
+        description="Define the category hierarchy for all your assets."
+        actions={
+          <Button type="primary" size="large" icon={<PlusOutlined />} onClick={openCreate} className="border-none bg-primary shadow-md hover:bg-primary-hover">
+            New Category
+          </Button>
+        }
+      />
 
-      <div className="bg-[#ffffff] rounded-2xl border border-[#e5e7eb] shadow-sm p-6">
+      <Card>
         <Table
           rowKey="id"
           dataSource={data}
@@ -135,9 +139,9 @@ export default function CategoriesPage() {
           loading={loading}
           pagination={{ pageSize: 15, showSizeChanger: true }}
           bordered={false}
-          className="border border-[#e5e7eb] rounded-xl overflow-hidden"
+          className="overflow-hidden rounded-xl border border-gray-800"
         />
-      </div>
+      </Card>
 
       <Modal
         title={
@@ -167,6 +171,6 @@ export default function CategoriesPage() {
           </Form.Item>
         </Form>
       </Modal>
-    </div>
+    </PageShell>
   );
 }
