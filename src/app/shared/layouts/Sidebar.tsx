@@ -101,17 +101,7 @@ export default function Sidebar() {
         </div>
       </div>
 
-      {role !== "employee" && (
-        <div className="mb-4 px-4">
-          <button
-            type="button"
-            className="flex h-11 w-full items-center justify-center gap-2 rounded-xl border-none bg-primary font-bold text-white shadow-lg shadow-primary/20 transition-all hover:scale-[1.02] hover:bg-primary-hover"
-          >
-            <Plus className="h-4 w-4" />
-            <span>Add Asset</span>
-          </button>
-        </div>
-      )}
+      \
 
       <div className="mx-3 mb-4 flex items-center gap-3 rounded-xl border border-gray-800 bg-gray-950 px-4 py-3">
         <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary-light text-sm font-bold text-primary">
@@ -134,7 +124,9 @@ export default function Sidebar() {
         {navItems.map((item) => {
           const Icon = item.icon;
           const isActive =
-            pathname === item.href || pathname.startsWith(`${item.href}/`);
+            item.label === "Dashboard"
+              ? pathname === item.href
+              : pathname === item.href || pathname.startsWith(`${item.href}/`);
           return (
             <Link
               key={item.href}
@@ -163,7 +155,7 @@ export default function Sidebar() {
         <button
           type="button"
           onClick={() => signOut({ callbackUrl: "/login" })}
-          className="flex w-full items-center gap-3 rounded-xl px-4 py-2.5 text-sm font-medium text-gray-400 transition-all duration-150 hover:bg-red-50 hover:text-red-500"
+          className="flex w-full items-center gap-3 rounded-xl px-4 py-2.5 text-sm font-medium text-gray-400 transition-all duration-150 hover:bg-red-50 hover:text-red-500 !border-none !bg-transparent"
         >
           <LogOut className="h-4 w-4 shrink-0" />
           <span>Sign Out</span>

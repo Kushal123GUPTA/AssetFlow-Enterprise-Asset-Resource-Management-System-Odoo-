@@ -67,7 +67,7 @@ export async function POST(req: NextRequest) {
       .from(auditItems)
       .where(and(eq(auditItems.auditCycleId, auditCycleId), isNull(auditItems.deletedAt)));
 
-    let enrichedItems = [];
+    let enrichedItems: any[] = [];
     if (items.length > 0) {
       const assetIds = [...new Set(items.map((i) => i.assetId))];
       const verifiedByEmployeeIds = [...new Set(items.map((i) => i.verifiedBy).filter(Boolean))] as string[];
