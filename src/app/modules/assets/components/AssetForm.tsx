@@ -145,7 +145,7 @@ export default function AssetFormModal({ open, onClose, onSubmit, categories, de
         {/* Main fields grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-x-4">
           <Form.Item name="name" label="Asset Name" rules={[{ required: true, message: "Name is required" }]}>
-            <Input placeholder="e.g. Dell XPS 15 Laptop" />
+            <Input placeholder="e.g. Dell XPS 15 Laptop" className="w-full rounded-lg" style={{ width: "100%" }} />
           </Form.Item>
           <Form.Item name="categoryId" label="Category" rules={[{ required: true, message: "Category is required" }]}>
             <Select
@@ -153,22 +153,24 @@ export default function AssetFormModal({ open, onClose, onSubmit, categories, de
               showSearch
               optionFilterProp="label"
               options={categories.map((c) => ({ label: c.name, value: c.id }))}
+              className="w-full rounded-lg"
+              style={{ width: "100%" }}
             />
           </Form.Item>
           <Form.Item name="serialNumber" label="Serial Number">
-            <Input placeholder="e.g. SN-123456" />
+            <Input placeholder="e.g. SN-123456" className="w-full rounded-lg" style={{ width: "100%" }} />
           </Form.Item>
           <Form.Item name="condition" label="Condition">
-            <Select placeholder="Select condition" options={CONDITION_OPTIONS} allowClear />
+            <Select placeholder="Select condition" options={CONDITION_OPTIONS} allowClear className="w-full rounded-lg" style={{ width: "100%" }} />
           </Form.Item>
           <Form.Item name="acquisitionDate" label="Acquisition Date">
-            <DatePicker className="!w-full" />
+            <DatePicker className="w-full rounded-lg" style={{ width: "100%" }} />
           </Form.Item>
           <Form.Item name="acquisitionCost" label="Acquisition Cost">
-            <InputNumber placeholder="0.00" min={0} precision={2} className="!w-full" prefix="₹" />
+            <InputNumber placeholder="0.00" min={0} precision={2} className="w-full rounded-lg" prefix="₹" style={{ width: "100%" }} />
           </Form.Item>
           <Form.Item name="location" label="Location">
-            <Input placeholder="e.g. Building A, Floor 3" />
+            <Input placeholder="e.g. Building A, Floor 3" className="w-full rounded-lg" style={{ width: "100%" }} />
           </Form.Item>
           <Form.Item name="departmentId" label="Department">
             <Select
@@ -177,6 +179,8 @@ export default function AssetFormModal({ open, onClose, onSubmit, categories, de
               optionFilterProp="label"
               options={departments.map((d) => ({ label: d.name, value: d.id }))}
               allowClear
+              className="w-full rounded-lg"
+              style={{ width: "100%" }}
             />
           </Form.Item>
         </div>

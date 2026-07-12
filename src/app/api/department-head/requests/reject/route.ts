@@ -42,28 +42,26 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "You cannot reject requests outside your department" }, { status: 403 });
     }
 
-    // 3. Update DB
-    await db.transaction(async (tx) => {
-      await tx
-        .update(transferRequests)
-        .set({
-          status: "rejected",
-          updatedBy: session.user.id,
-          updatedAt: new Date().toISOString(),
-        })
-        .where(eq(transferRequests.id, requestId));
+    // 3. Update DB sequentially (neon-http does not support transactions natively)
+    await db
+      .update(transferRequests)
+      .set({
+        status: "rejected",
+        updatedBy: session.user.id,
+        updatedAt: new Date().toISOString(),
+      })
+      .where(eq(transferRequests.id, requestId));
 
-      await tx.insert(activityLogsDefault).values({
-        organizationId: session.user.organizationId,
-        employeeId: session.user.id,
-        action: "asset.transfer_rejected",
-        entityType: "transfer_request",
-        entityId: requestId,
-        details: {
-          requestId,
-          reason: reason || "No reason provided",
-        },
-      });
+    await db.insert(activityLogsDefault).values({
+      organizationId: session.user.organizationId,
+      employeeId: session.user.id,
+      action: "asset.transfer_rejected",
+      entityType: "transfer_request",
+      entityId: requestId,
+      details: {
+        requestId,
+        reason: reason || "No reason provided",
+      },
     });
 
     return NextResponse.json({ success: true, message: "Request rejected successfully" });

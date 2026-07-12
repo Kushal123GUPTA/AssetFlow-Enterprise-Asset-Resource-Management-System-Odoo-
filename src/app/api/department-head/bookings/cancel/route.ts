@@ -39,29 +39,27 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "You cannot cancel bookings outside your department" }, { status: 403 });
     }
 
-    // 3. Update status
-    await db.transaction(async (tx) => {
-      await tx
-        .update(resourceBookings)
-        .set({
-          status: "cancelled",
-          cancelledReason: reason || "Cancelled by Department Head",
-          updatedBy: session.user.id,
-          updatedAt: new Date().toISOString(),
-        })
-        .where(eq(resourceBookings.id, bookingId));
+    // 3. Update status sequentially (neon-http does not support transactions natively)
+    await db
+      .update(resourceBookings)
+      .set({
+        status: "cancelled",
+        cancelledReason: reason || "Cancelled by Department Head",
+        updatedBy: session.user.id,
+        updatedAt: new Date().toISOString(),
+      })
+      .where(eq(resourceBookings.id, bookingId));
 
-      await tx.insert(activityLogsDefault).values({
-        organizationId: session.user.organizationId,
-        employeeId: session.user.id,
-        action: "booking.cancel",
-        entityType: "resource_booking",
-        entityId: bookingId,
-        details: {
-          bookingId,
-          reason: reason || "Cancelled by Department Head",
-        },
-      });
+    await db.insert(activityLogsDefault).values({
+      organizationId: session.user.organizationId,
+      employeeId: session.user.id,
+      action: "booking.cancel",
+      entityType: "resource_booking",
+      entityId: bookingId,
+      details: {
+        bookingId,
+        reason: reason || "Cancelled by Department Head",
+      },
     });
 
     return NextResponse.json({ success: true, message: "Booking cancelled successfully" });

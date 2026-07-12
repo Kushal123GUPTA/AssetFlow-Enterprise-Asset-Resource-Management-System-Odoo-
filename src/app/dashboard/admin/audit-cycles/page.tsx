@@ -201,18 +201,18 @@ export default function AuditCyclesPage() {
             <DatePicker.RangePicker size="large" className="w-full rounded-lg" format="YYYY-MM-DD" />
           </Form.Item>
           <Form.Item name="scopeDepartmentId" label={<span className="font-medium text-[#111827]">Scope: Department</span>}>
-            <Select size="large" allowClear placeholder="All departments" className="rounded-lg">
+            <Select size="large" allowClear placeholder="All departments" className="w-full rounded-lg" style={{ width: "100%" }}>
               {departments.map((d) => (
                 <Select.Option key={d.id} value={d.id}>{d.name}</Select.Option>
               ))}
             </Select>
           </Form.Item>
           <Form.Item name="scopeLocation" label={<span className="font-medium text-[#111827]">Scope: Location</span>}>
-            <Input size="large" placeholder="e.g. Headquarters Floor 3" className="rounded-lg" />
+            <Input size="large" placeholder="e.g. Headquarters Floor 3" className="w-full rounded-lg" style={{ width: "100%" }} />
           </Form.Item>
           {editing && (
             <Form.Item name="status" label={<span className="font-medium text-[#111827]">Status</span>}>
-              <Select size="large" className="rounded-lg">
+              <Select size="large" className="w-full rounded-lg" style={{ width: "100%" }}>
                 <Select.Option value="planned">Planned</Select.Option>
                 <Select.Option value="in_progress">In Progress</Select.Option>
                 <Select.Option value="closed">Closed</Select.Option>

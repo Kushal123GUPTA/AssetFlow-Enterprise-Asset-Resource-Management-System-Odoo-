@@ -54,84 +54,82 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Associated asset not found" }, { status: 404 });
     }
 
-    // 3. Execute database updates in a transaction
-    await db.transaction(async (tx) => {
-      // a. Mark old allocation as returned if exists
-      if (request.currentAllocationId) {
-        await tx
-          .update(assetAllocations)
-          .set({
-            status: "returned",
-            actualReturnDate: new Date().toISOString(),
-            returnedApprovedBy: session.user.id,
-            updatedBy: session.user.id,
-            updatedAt: new Date().toISOString(),
-          })
-          .where(eq(assetAllocations.id, request.currentAllocationId));
-      }
-
-      // b. Create new active allocation
-      const newAlloc = await tx
-        .insert(assetAllocations)
-        .values({
-          assetId: request.assetId,
-          employeeId: request.toEmployeeId,
-          departmentId: request.toDepartmentId || departmentId,
-          allocatedBy: session.user.id,
-          status: "active",
-          createdBy: session.user.id,
-          updatedBy: session.user.id,
-        })
-        .returning({ id: assetAllocations.id });
-
-      const newAllocationId = newAlloc[0].id;
-
-      // c. Update transfer request with 'approved' status and reference the new allocation
-      await tx
-        .update(transferRequests)
+    // 3. Execute database updates sequentially (neon-http does not support transactions natively)
+    // a. Mark old allocation as returned if exists
+    if (request.currentAllocationId) {
+      await db
+        .update(assetAllocations)
         .set({
-          status: "approved",
-          approvedBy: session.user.id,
-          approvedAt: new Date().toISOString(),
-          resultingAllocationId: newAllocationId,
+          status: "returned",
+          actualReturnDate: new Date().toISOString(),
+          returnedApprovedBy: session.user.id,
           updatedBy: session.user.id,
           updatedAt: new Date().toISOString(),
         })
-        .where(eq(transferRequests.id, requestId));
+        .where(eq(assetAllocations.id, request.currentAllocationId));
+    }
 
-      // d. Update asset status to 'allocated' and update location/department
-      await tx
-        .update(assets)
-        .set({
-          status: "allocated",
-          departmentId: request.toDepartmentId || departmentId,
-          updatedBy: session.user.id,
-          updatedAt: new Date().toISOString(),
-        })
-        .where(eq(assets.id, request.assetId));
-
-      // e. Log status history change
-      await tx.insert(assetStatusHistory).values({
+    // b. Create new active allocation
+    const newAlloc = await db
+      .insert(assetAllocations)
+      .values({
         assetId: request.assetId,
-        fromStatus: asset.status,
-        toStatus: "allocated",
-        changedBy: session.user.id,
-        reason: "Transfer approved by Department Head",
-      });
+        employeeId: request.toEmployeeId,
+        departmentId: request.toDepartmentId || departmentId,
+        allocatedBy: session.user.id,
+        status: "active",
+        createdBy: session.user.id,
+        updatedBy: session.user.id,
+      })
+      .returning({ id: assetAllocations.id });
 
-      // f. Log activity log
-      await tx.insert(activityLogsDefault).values({
-        organizationId: session.user.organizationId,
-        employeeId: session.user.id,
-        action: "asset.transfer_approved",
-        entityType: "transfer_request",
-        entityId: requestId,
-        details: {
-          requestId,
-          assetId: request.assetId,
-          newAllocationId,
-        },
-      });
+    const newAllocationId = newAlloc[0].id;
+
+    // c. Update transfer request with 'approved' status and reference the new allocation
+    await db
+      .update(transferRequests)
+      .set({
+        status: "approved",
+        approvedBy: session.user.id,
+        approvedAt: new Date().toISOString(),
+        resultingAllocationId: newAllocationId,
+        updatedBy: session.user.id,
+        updatedAt: new Date().toISOString(),
+      })
+      .where(eq(transferRequests.id, requestId));
+
+    // d. Update asset status to 'allocated' and update location/department
+    await db
+      .update(assets)
+      .set({
+        status: "allocated",
+        departmentId: request.toDepartmentId || departmentId,
+        updatedBy: session.user.id,
+        updatedAt: new Date().toISOString(),
+      })
+      .where(eq(assets.id, request.assetId));
+
+    // e. Log status history change
+    await db.insert(assetStatusHistory).values({
+      assetId: request.assetId,
+      fromStatus: asset.status,
+      toStatus: "allocated",
+      changedBy: session.user.id,
+      reason: "Transfer approved by Department Head",
+    });
+
+    // f. Log activity log
+    await db.insert(activityLogsDefault).values({
+      organizationId: session.user.organizationId,
+      employeeId: session.user.id,
+      action: "asset.transfer_approved",
+      entityType: "transfer_request",
+      entityId: requestId,
+      details: {
+        requestId,
+        assetId: request.assetId,
+        newAllocationId,
+      },
     });
 
     return NextResponse.json({ success: true, message: "Request approved successfully" });

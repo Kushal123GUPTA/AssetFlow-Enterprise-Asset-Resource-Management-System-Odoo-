@@ -163,7 +163,7 @@ export default function CategoriesPage() {
             <Input size="large" placeholder="e.g. Laptops" className="rounded-lg" />
           </Form.Item>
           <Form.Item name="parentCategoryId" label={<span className="font-medium text-[#111827]">Parent Category</span>}>
-            <Select size="large" allowClear placeholder="None (root category)" className="rounded-lg">
+            <Select size="large" allowClear placeholder="None (root category)" className="w-full rounded-lg" style={{ width: "100%" }}>
               {data.filter((c) => !editing || c.id !== editing.id).map((c) => (
                 <Select.Option key={c.id} value={c.id}>{c.name}</Select.Option>
               ))}

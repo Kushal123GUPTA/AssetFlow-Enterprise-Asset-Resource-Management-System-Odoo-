@@ -143,6 +143,8 @@ export default function AllocationFormModal({ open, onClose, onSubmit, employees
               label: `${a.name} (${a.assetTag}) — ${a.status.toUpperCase()}`,
               value: a.id,
             }))}
+            className="w-full rounded-lg"
+            style={{ width: "100%" }}
           />
         </Form.Item>
 
@@ -192,6 +194,8 @@ export default function AllocationFormModal({ open, onClose, onSubmit, employees
                 label: `${e.name} (${e.email})`,
                 value: e.id,
               }))}
+              className="w-full rounded-lg"
+              style={{ width: "100%" }}
             />
           </Form.Item>
         ) : (
@@ -204,6 +208,8 @@ export default function AllocationFormModal({ open, onClose, onSubmit, employees
                 label: d.name,
                 value: d.id,
               }))}
+              className="w-full rounded-lg"
+              style={{ width: "100%" }}
             />
           </Form.Item>
         )}

@@ -101,22 +101,6 @@ export default function Sidebar() {
         </div>
       </div>
 
-      \
-
-      <div className="mx-3 mb-4 flex items-center gap-3 rounded-xl border border-gray-800 bg-gray-950 px-4 py-3">
-        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary-light text-sm font-bold text-primary">
-          {session?.user?.name?.[0]?.toUpperCase() ?? "U"}
-        </div>
-        <div className="min-w-0">
-          <p className="truncate text-sm font-semibold leading-tight text-gray-100">
-            {session?.user?.name ?? "User"}
-          </p>
-          <p className="mt-0.5 truncate text-xs text-gray-500">
-            {session?.user?.email ?? ""}
-          </p>
-        </div>
-      </div>
-
       <nav className="custom-scrollbar flex-1 space-y-1 overflow-y-auto px-3 pb-2 pt-2">
         <p className="mb-2 px-3 text-[10px] font-bold uppercase tracking-wider text-gray-500">
           Navigation
