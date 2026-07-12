@@ -1,0 +1,19 @@
+---
+description: Code generation discipline — smallest scope, no speculative work
+alwaysApply: true
+---
+
+# Code Generation
+
+- Generate only the requested scope.
+- Do not create unrelated files.
+- Do not rewrite complete files for small changes.
+- Do not add speculative features.
+- Do not add mock data unless requested.
+- Do not add excessive comments.
+- Do not add generic AI-style abstractions.
+- Do not create giant components.
+- Do not silently change architecture.
+- Search for existing components and utilities before creating new ones.
+- Prefer clear project-specific names.
+- Keep generated code reviewable and human-sized.

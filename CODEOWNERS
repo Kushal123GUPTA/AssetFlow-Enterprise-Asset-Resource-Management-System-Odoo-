@@ -1,0 +1,48 @@
+# CODEOWNERS
+# Placeholder GitHub usernames — replace @integrator and @devN with real handles.
+# Paths are relative to the repository root.
+
+# Integrator-protected surfaces
+/src/app/shared/              @integrator
+/src/app/providers/           @integrator
+/src/app/guards/              @integrator
+/src/app/routes/              @integrator
+/src/app/layout.tsx           @integrator
+/src/app/page.tsx             @integrator
+/src/app/globals.css          @integrator
+/src/components/              @integrator
+/package.json                 @integrator
+/package-lock.json            @integrator
+/yarn.lock                    @integrator
+/pnpm-lock.yaml               @integrator
+/.cursor/                     @integrator
+/CODEOWNERS                   @integrator
+/TEAM_ARCHITECTURE.md         @integrator
+/CONTRIBUTING.md              @integrator
+
+# Developer 1
+/src/app/modules/auth/                @dev1
+/src/app/modules/organization/        @dev1
+/src/app/api/modules/auth/            @dev1
+/src/app/api/modules/organization/    @dev1
+
+# Developer 2
+/src/app/modules/assets/              @dev2
+/src/app/modules/allocation/          @dev2
+/src/app/api/modules/assets/          @dev2
+/src/app/api/modules/allocation/      @dev2
+
+# Developer 3
+/src/app/modules/booking/             @dev3
+/src/app/modules/maintenance/         @dev3
+/src/app/api/modules/booking/         @dev3
+/src/app/api/modules/maintenance/     @dev3
+
+# Developer 4
+/src/app/modules/dashboard/           @dev4
+/src/app/modules/audit/               @dev4
+/src/app/modules/reports/             @dev4
+/src/app/modules/notifications/       @dev4
+/src/app/api/modules/audit/           @dev4
+/src/app/api/modules/reports/         @dev4
+/src/app/api/modules/notifications/   @dev4
