@@ -1,0 +1,18 @@
+---
+description: Module import boundaries — modules may only import self and shared
+alwaysApply: true
+---
+
+# Module Boundaries
+
+- A module may import from **itself** and **`src/app/shared/`** only.
+- A module must **not** directly import another feature module under `src/app/modules/`.
+- Cross-module communication must use IDs, API contracts, events, or shared neutral types.
+- Feature-specific code must never be placed in shared.
+- Cursor must not edit another module when working on a feature unless explicitly instructed.
+- Circular dependencies are forbidden.
+
+## Backend parity
+
+- `src/app/api/modules/<feature>/` follows the same isolation rules.
+- API modules must not import sibling feature API modules directly.
