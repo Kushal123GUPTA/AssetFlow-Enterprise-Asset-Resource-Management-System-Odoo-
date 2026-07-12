@@ -1,15 +1,11 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { Package, GitMerge, ArrowLeftRight, Calendar, CheckCircle2, Clock, XCircle, ArrowRight, Users } from "lucide-react";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
-
-const KPI_CARDS = [
-  { label: "Dept Assets", value: "43", change: "All accounted for", icon: Package, color: "from-emerald-500 to-teal-500", bg: "bg-emerald-500/10 border-emerald-500/20" },
-  { label: "Allocated to Members", value: "38", change: "5 unallocated", icon: Users, color: "from-blue-500 to-cyan-500", bg: "bg-blue-500/10 border-blue-500/20" },
-  { label: "Pending Requests", value: "5", change: "2 allocation, 3 transfer", icon: GitMerge, color: "from-violet-500 to-purple-600", bg: "bg-violet-500/10 border-violet-500/20" },
-  { label: "Active Bookings", value: "7", change: "3 upcoming today", icon: Calendar, color: "from-amber-500 to-orange-500", bg: "bg-amber-500/10 border-amber-500/20" },
-];
+import { useDepartmentHeadStore } from "@/store/departmentHeadStore";
+import { Spin, Modal, Input, message } from "antd";
 
 const QUICK_LINKS = [
   { label: "Department Assets", href: "/dashboard/department-head/assets", icon: Package, desc: "View all assets assigned to your department" },
@@ -18,21 +14,67 @@ const QUICK_LINKS = [
   { label: "Book Resources", href: "/dashboard/department-head/bookings", icon: Calendar, desc: "Book shared resources on behalf of the dept" },
 ];
 
-const DEPT_ASSETS = [
-  { name: "MacBook Pro M3", tag: "AST-007", status: "allocated", employee: "Sarah K." },
-  { name: "Dell Monitor 27\"", tag: "AST-022", status: "available", employee: "—" },
-  { name: "iPhone 15 Pro", tag: "AST-041", status: "allocated", employee: "James T." },
-  { name: "Epson Projector", tag: "AST-003", status: "allocated", employee: "Dept Pool" },
-];
-
-const STATUS_STYLE: Record<string, string> = {
-  allocated: "bg-blue-500/15 text-blue-400",
-  available: "bg-emerald-500/15 text-emerald-400",
-  maintenance: "bg-amber-500/15 text-amber-400",
-};
-
 export default function DepartmentHeadDashboard() {
   const { data: session } = useSession();
+  const {
+    dashboardData,
+    isLoading,
+    fetchDashboardData,
+    approveRequest,
+    rejectRequest,
+  } = useDepartmentHeadStore();
+
+  const [rejectId, setRejectId] = useState<string | null>(null);
+  const [rejectReason, setRejectReason] = useState("");
+
+  useEffect(() => {
+    fetchDashboardData();
+  }, [fetchDashboardData]);
+
+  const handleApprove = async (id: string) => {
+    const success = await approveRequest(id);
+    if (success) {
+      message.success("Request approved successfully");
+    } else {
+      message.error("Failed to approve request");
+    }
+  };
+
+  const handleRejectSubmit = async () => {
+    if (!rejectId) return;
+    const success = await rejectRequest(rejectId, rejectReason);
+    if (success) {
+      message.success("Request rejected successfully");
+      setRejectId(null);
+      setRejectReason("");
+    } else {
+      message.error("Failed to reject request");
+    }
+  };
+
+  if (isLoading && !dashboardData) {
+    return (
+      <div className="flex items-center justify-center h-96">
+        <Spin size="default" />
+      </div>
+    );
+  }
+
+  const kpis = dashboardData?.kpis || {
+    deptAssets: 0,
+    allocatedMembers: 0,
+    pendingRequests: 0,
+    activeBookings: 0,
+  };
+
+  const KPI_CARDS = [
+    { label: "Dept Assets", value: String(kpis.deptAssets), change: "All tracked in home dept", icon: Package, color: "from-emerald-500 to-teal-500", bg: "bg-emerald-500/10 border-emerald-500/20" },
+    { label: "Allocated to Members", value: String(kpis.allocatedMembers), change: "Held by employees", icon: Users, color: "from-blue-500 to-cyan-500", bg: "bg-blue-500/10 border-blue-500/20" },
+    { label: "Pending Requests", value: String(kpis.pendingRequests), change: "Needs review", icon: GitMerge, color: "from-violet-500 to-purple-600", bg: "bg-violet-500/10 border-violet-500/20" },
+    { label: "Active Bookings", value: String(kpis.activeBookings), change: "Upcoming bookings", icon: Calendar, color: "from-amber-500 to-orange-500", bg: "bg-amber-500/10 border-amber-500/20" },
+  ];
+
+  const pendingRequests = dashboardData?.pendingRequests || [];
 
   return (
     <div className="space-y-8 max-w-7xl">
@@ -93,27 +135,30 @@ export default function DepartmentHeadDashboard() {
 
       {/* Bottom panels */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Dept asset list */}
-        <div className="rounded-2xl bg-gray-900 border border-gray-800 p-6">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-2">
+        {/* Quick action helper panel */}
+        <div className="rounded-2xl bg-gray-900 border border-gray-800 p-6 flex flex-col justify-between">
+          <div>
+            <div className="flex items-center gap-2 mb-4">
               <Package className="w-4 h-4 text-emerald-400" />
-              <h3 className="text-gray-200 font-semibold text-sm">Department Assets</h3>
+              <h3 className="text-gray-200 font-semibold text-sm">Active Resources & Bookings</h3>
             </div>
-            <Link href="/dashboard/department-head/assets" className="text-xs text-emerald-400 hover:text-emerald-300">View all</Link>
+            <p className="text-gray-400 text-sm leading-relaxed">
+              As a Department Head, you are responsible for approving physical transfers of devices (e.g. laptops, monitors, mobile devices) within your department. You can also view department assets, verify they are in clean condition, and make conflict-free bookings on behalf of your team members.
+            </p>
           </div>
-          <div className="space-y-2">
-            {DEPT_ASSETS.map((asset) => (
-              <div key={asset.tag} className="flex items-center justify-between py-2.5 px-3 rounded-xl bg-gray-800/60 border border-gray-700/50">
-                <div>
-                  <p className="text-gray-200 text-sm font-medium">{asset.name}</p>
-                  <p className="text-gray-500 text-xs">{asset.tag} · {asset.employee}</p>
-                </div>
-                <span className={`text-xs font-medium px-2 py-0.5 rounded-full capitalize ${STATUS_STYLE[asset.status]}`}>
-                  {asset.status}
-                </span>
-              </div>
-            ))}
+          <div className="mt-6 flex gap-4">
+            <Link
+              href="/dashboard/department-head/assets"
+              className="px-4 py-2 text-xs font-semibold text-white bg-emerald-600 hover:bg-emerald-500 rounded-xl transition-all"
+            >
+              Manage Assets
+            </Link>
+            <Link
+              href="/dashboard/department-head/bookings"
+              className="px-4 py-2 text-xs font-semibold text-gray-300 bg-gray-800 hover:bg-gray-700 rounded-xl transition-all border border-gray-700"
+            >
+              Book Shared spaces
+            </Link>
           </div>
         </div>
 
@@ -124,34 +169,67 @@ export default function DepartmentHeadDashboard() {
             <h3 className="text-gray-200 font-semibold text-sm">Pending Approval Requests</h3>
           </div>
           <div className="space-y-3">
-            {[
-              { name: "Alice M.", request: "Allocate MacBook Air", type: "Allocation" },
-              { name: "Bob R.", request: "Transfer Monitor to HR", type: "Transfer" },
-              { name: "Carol S.", request: "Allocate iPad for design work", type: "Allocation" },
-            ].map((req, i) => (
-              <div key={i} className="flex items-center justify-between py-2.5 px-3 rounded-xl bg-gray-800/60 border border-gray-700/50">
-                <div>
-                  <p className="text-gray-200 text-sm font-medium">{req.name}</p>
-                  <p className="text-gray-500 text-xs mt-0.5">{req.request}</p>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${req.type === "Allocation" ? "bg-blue-500/15 text-blue-400" : "bg-violet-500/15 text-violet-400"}`}>
-                    {req.type}
-                  </span>
-                  <div className="flex gap-1">
-                    <button className="w-6 h-6 rounded-md bg-emerald-500/20 flex items-center justify-center hover:bg-emerald-500/40 transition-colors">
-                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
-                    </button>
-                    <button className="w-6 h-6 rounded-md bg-red-500/20 flex items-center justify-center hover:bg-red-500/40 transition-colors">
-                      <XCircle className="w-3.5 h-3.5 text-red-400" />
-                    </button>
+            {pendingRequests.length === 0 ? (
+              <p className="text-gray-500 text-sm py-4 text-center">No pending approvals</p>
+            ) : (
+              pendingRequests.map((req) => (
+                <div key={req.id} className="flex items-center justify-between py-2.5 px-3 rounded-xl bg-gray-800/60 border border-gray-700/50">
+                  <div className="min-w-0 flex-1 pr-4">
+                    <p className="text-gray-200 text-sm font-medium truncate">{req.toEmployeeName || "Department Pool"}</p>
+                    <p className="text-gray-500 text-xs mt-0.5 truncate">
+                      {req.type === "Allocation" ? "Allocate" : `Transfer from ${req.fromEmployeeName}`} · <span className="text-emerald-400">{req.assetName} ({req.assetTag})</span>
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${req.type === "Allocation" ? "bg-blue-500/15 text-blue-400" : "bg-violet-500/15 text-violet-400"}`}>
+                      {req.type}
+                    </span>
+                    <div className="flex gap-1">
+                      <button
+                        onClick={() => handleApprove(req.id)}
+                        className="w-6 h-6 rounded-md bg-emerald-500/20 flex items-center justify-center hover:bg-emerald-500/40 transition-colors"
+                        title="Approve"
+                      >
+                        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+                      </button>
+                      <button
+                        onClick={() => setRejectId(req.id)}
+                        className="w-6 h-6 rounded-md bg-red-500/20 flex items-center justify-center hover:bg-red-500/40 transition-colors"
+                        title="Reject"
+                      >
+                        <XCircle className="w-3.5 h-3.5 text-red-400" />
+                      </button>
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              ))
+            )}
           </div>
         </div>
       </div>
+
+      {/* Reject Reason Modal */}
+      <Modal
+        title="Reject Request"
+        open={rejectId !== null}
+        onOk={handleRejectSubmit}
+        onCancel={() => {
+          setRejectId(null);
+          setRejectReason("");
+        }}
+        okText="Confirm Reject"
+        cancelText="Cancel"
+      >
+        <div className="space-y-3 py-3">
+          <p className="text-sm text-gray-600">Please provide a reason for rejecting this transfer/allocation request:</p>
+          <Input.TextArea
+            rows={4}
+            value={rejectReason}
+            onChange={(e) => setRejectReason(e.target.value)}
+            placeholder="E.g., Device is currently needed for a critical task / Incorrect recipient."
+          />
+        </div>
+      </Modal>
     </div>
   );
 }
