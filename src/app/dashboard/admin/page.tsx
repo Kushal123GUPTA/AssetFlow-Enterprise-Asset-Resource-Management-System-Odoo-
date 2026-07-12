@@ -26,7 +26,7 @@ export default function AdminDashboard() {
     <div className="space-y-8 max-w-7xl">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold text-white">
+        <h1 className="text-2xl font-bold text-gray-900">
           Welcome back, {session?.user?.name?.split(" ")[0]} 👋
         </h1>
         <p className="text-gray-400 mt-1 text-sm">
@@ -43,7 +43,7 @@ export default function AdminDashboard() {
               <div className="flex items-start justify-between">
                 <div>
                   <p className="text-gray-400 text-xs font-medium uppercase tracking-wider">{kpi.label}</p>
-                  <p className="text-3xl font-bold text-white mt-1">{kpi.value}</p>
+                  <p className="text-3xl font-bold text-gray-900 mt-1">{kpi.value}</p>
                   <p className="text-gray-500 text-xs mt-1">{kpi.change}</p>
                 </div>
                 <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${kpi.color} flex items-center justify-center shrink-0`}>

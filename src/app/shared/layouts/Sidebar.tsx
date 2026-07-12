@@ -20,6 +20,7 @@ import {
   Bell,
   LogOut,
   ChevronRight,
+  Plus
 } from "lucide-react";
 
 type NavItem = {
@@ -70,47 +71,52 @@ const ROLE_LABELS: Record<string, string> = {
   employee: "Employee",
 };
 
-const ROLE_COLORS: Record<string, string> = {
-  admin: "from-violet-600 to-purple-700",
-  asset_manager: "from-blue-600 to-cyan-600",
-  department_head: "from-emerald-600 to-teal-600",
-  employee: "from-orange-500 to-amber-500",
-};
-
 export default function Sidebar() {
   const { data: session } = useSession();
   const pathname = usePathname();
   const role = (session?.user?.role ?? "employee") as string;
   const navItems = NAV_BY_ROLE[role] ?? NAV_BY_ROLE.employee;
-  const gradient = ROLE_COLORS[role] ?? ROLE_COLORS.employee;
 
   return (
-    <aside className="flex flex-col w-64 min-h-screen bg-gray-950 border-r border-gray-800/60 shrink-0">
-      {/* Brand */}
-      <div className={`flex items-center gap-3 px-5 py-5 bg-gradient-to-r ${gradient}`}>
-        <div className="flex items-center justify-center w-9 h-9 rounded-xl bg-white/20 backdrop-blur-sm">
-          <Package className="w-5 h-5 text-white" />
-        </div>
-        <div>
-          <p className="text-white font-bold text-base leading-tight">AssetFlow</p>
-          <p className="text-white/70 text-xs">{ROLE_LABELS[role]}</p>
+    <aside className="flex flex-col w-64 min-h-screen bg-white border-r border-gray-800 shrink-0 z-20">
+      {/* Brand Logo Section */}
+      <div className="h-20 flex items-center px-6 mt-2">
+        <div className="flex items-center gap-3">
+          {/* Stylized Orange Logo (SubMan-style) */}
+          <div className="w-10 h-10 bg-primary rounded-xl flex items-center justify-center text-white font-black text-2xl shadow-md shadow-primary/20 transform rotate-6">
+            A
+          </div>
+          <div className="flex flex-col">
+            <span className="text-xl font-black text-gray-900 tracking-tight leading-none">AssetFlow</span>
+            <span className="text-[10px] font-bold text-gray-400 tracking-widest uppercase mt-1">
+              {ROLE_LABELS[role]}
+            </span>
+          </div>
         </div>
       </div>
 
-      {/* User info */}
-      <div className="flex items-center gap-3 px-4 py-3 mx-3 mt-4 rounded-xl bg-gray-800/50 border border-gray-700/50">
-        <div className={`flex items-center justify-center w-9 h-9 rounded-full bg-gradient-to-br ${gradient} text-white font-semibold text-sm shrink-0`}>
+      {/* Prominent Action Button (+ Add Asset) */}
+      <div className="px-4 mb-4">
+        <button className="w-full h-11 bg-primary hover:bg-primary-hover text-white border-none rounded-xl font-bold shadow-lg shadow-primary/20 flex items-center justify-center gap-2 transition-all hover:scale-[1.02]">
+          <Plus className="w-4 h-4" />
+          <span>Add Asset</span>
+        </button>
+      </div>
+
+      {/* User Info Widget */}
+      <div className="flex items-center gap-3 px-4 py-3 mx-3 mb-4 rounded-xl bg-gray-50 border border-gray-800">
+        <div className="flex items-center justify-center w-9 h-9 rounded-full bg-primary-light text-primary font-bold text-sm shrink-0">
           {session?.user?.name?.[0]?.toUpperCase() ?? "U"}
         </div>
         <div className="min-w-0">
-          <p className="text-gray-100 text-sm font-medium truncate">{session?.user?.name ?? "User"}</p>
-          <p className="text-gray-400 text-xs truncate">{session?.user?.email ?? ""}</p>
+          <p className="text-gray-800 text-sm font-semibold truncate leading-tight">{session?.user?.name ?? "User"}</p>
+          <p className="text-gray-400 text-xs truncate mt-0.5">{session?.user?.email ?? ""}</p>
         </div>
       </div>
 
-      {/* Nav */}
-      <nav className="flex-1 px-3 pt-5 pb-2 space-y-1">
-        <p className="text-gray-500 text-xs font-semibold uppercase tracking-widest px-3 mb-2">
+      {/* Nav Menu */}
+      <nav className="flex-1 px-3 pt-2 pb-2 space-y-1 overflow-y-auto custom-scrollbar">
+        <p className="text-gray-400 text-[10px] font-bold uppercase tracking-wider px-3 mb-2">
           Navigation
         </p>
         {navItems.map((item) => {
@@ -120,28 +126,28 @@ export default function Sidebar() {
             <Link
               key={item.href}
               href={item.href}
-              className={`group flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-150 ${
+              className={`group flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium transition-all duration-150 ${
                 isActive
-                  ? `bg-gradient-to-r ${gradient} text-white shadow-lg shadow-black/20`
-                  : "text-gray-400 hover:text-gray-100 hover:bg-gray-800/70"
+                  ? `bg-primary-light text-primary font-bold shadow-sm`
+                  : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
               }`}
             >
-              <Icon className={`w-4 h-4 shrink-0 ${isActive ? "text-white" : "text-gray-500 group-hover:text-gray-300"}`} />
+              <Icon className={`w-4 h-4 shrink-0 ${isActive ? "text-primary" : "text-gray-400 group-hover:text-gray-600"}`} />
               <span className="flex-1">{item.label}</span>
-              {isActive && <ChevronRight className="w-3 h-3 text-white/60" />}
+              {isActive && <ChevronRight className="w-3.5 h-3.5 text-primary" />}
             </Link>
           );
         })}
       </nav>
 
       {/* Sign out */}
-      <div className="px-3 pb-5">
+      <div className="px-3 pb-5 border-t border-gray-800 pt-4">
         <button
           onClick={() => signOut({ callbackUrl: "/login" })}
-          className="flex items-center gap-3 w-full px-3 py-2.5 rounded-lg text-sm font-medium text-gray-400 hover:text-red-400 hover:bg-red-500/10 transition-all duration-150"
+          className="flex items-center gap-3 w-full px-4 py-2.5 rounded-xl text-sm font-medium text-gray-500 hover:text-red-500 hover:bg-red-50 transition-all duration-150"
         >
           <LogOut className="w-4 h-4 shrink-0" />
-          Sign Out
+          <span>Sign Out</span>
         </button>
       </div>
     </aside>
