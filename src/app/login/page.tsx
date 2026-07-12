@@ -17,7 +17,7 @@ export default function LoginPage() {
     const success = await login(values);
     if (success) {
       setSuccess(true);
-      router.push("/dashboard");
+      router.push("/dashboard"); // /dashboard redirects to role-specific page
     }
   };
 
