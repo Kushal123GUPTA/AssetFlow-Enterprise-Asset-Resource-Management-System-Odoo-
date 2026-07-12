@@ -6,6 +6,7 @@ import { useAuthStore } from "@/store/authStore";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useState } from "react";
+import AuthLogo from "@/app/modules/auth/components/AuthLogo";
 
 export default function SignupPage() {
   const { signup, isLoading, error, clearError } = useAuthStore();
@@ -25,12 +26,13 @@ export default function SignupPage() {
     <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4 sm:px-6 lg:px-8 py-12">
       <div className="max-w-md w-full space-y-8 bg-white p-8 rounded-xl shadow-lg">
         <div>
-          <h2 className="mt-2 text-center text-3xl font-extrabold text-gray-900">
+          <AuthLogo className="mb-6" />
+          <h2 className="mt-2 text-center text-3xl font-extrabold text-gray-100">
             Create an account
           </h2>
-          <p className="mt-2 text-center text-sm text-gray-600">
+          <p className="mt-2 text-center text-sm text-gray-500">
             Already have an account?{" "}
-            <Link href="/login" className="font-medium text-blue-600 hover:text-blue-500">
+            <Link href="/login" className="font-medium text-primary hover:text-primary-hover">
               Sign in here
             </Link>
           </p>
