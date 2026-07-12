@@ -38,6 +38,7 @@ const NAV_BY_ROLE: Record<string, NavItem[]> = {
     { label: "Audit Cycles", href: "/dashboard/admin/audit-cycles", icon: ClipboardList },
     { label: "Employees & Roles", href: "/dashboard/admin/employees", icon: Users },
     { label: "Analytics", href: "/dashboard/admin/analytics", icon: BarChart3 },
+    { label: "Notifications", href: "/dashboard/notifications", icon: Bell },
   ],
   asset_manager: [
     { label: "Dashboard", href: "/dashboard/asset-manager", icon: LayoutDashboard },
@@ -47,6 +48,7 @@ const NAV_BY_ROLE: Record<string, NavItem[]> = {
     { label: "Maintenance", href: "/dashboard/asset-manager/maintenance", icon: Wrench },
     { label: "Audit & Discrepancies", href: "/dashboard/asset-manager/audit", icon: ClipboardCheck },
     { label: "Asset Returns", href: "/dashboard/asset-manager/returns", icon: RotateCcw },
+    { label: "Notifications", href: "/dashboard/notifications", icon: Bell },
   ],
   department_head: [
     { label: "Dashboard", href: "/dashboard/department-head", icon: LayoutDashboard },
@@ -54,6 +56,7 @@ const NAV_BY_ROLE: Record<string, NavItem[]> = {
     { label: "Allocation Requests", href: "/dashboard/department-head/allocations", icon: GitMerge },
     { label: "Transfer Requests", href: "/dashboard/department-head/transfers", icon: ArrowLeftRight },
     { label: "Resource Bookings", href: "/dashboard/department-head/bookings", icon: Calendar },
+    { label: "Notifications", href: "/dashboard/notifications", icon: Bell },
   ],
   employee: [
     { label: "Dashboard", href: "/dashboard/employee", icon: LayoutDashboard },
@@ -61,7 +64,7 @@ const NAV_BY_ROLE: Record<string, NavItem[]> = {
     { label: "Book Resources", href: "/dashboard/employee/bookings", icon: Calendar },
     { label: "Maintenance Requests", href: "/dashboard/employee/maintenance", icon: Wrench },
     { label: "Return / Transfer", href: "/dashboard/employee/requests", icon: RotateCcw },
-    { label: "Notifications", href: "/dashboard/employee/notifications", icon: Bell },
+    { label: "Notifications", href: "/dashboard/notifications", icon: Bell },
   ],
 };
 
