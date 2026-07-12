@@ -1,10 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Button, Table, Tabs, Tag, Alert, Progress, Tooltip, Input, message } from "antd";
+import { Button, Table, Tabs, Tag, Progress, Input, message, Space } from "antd";
 import { ArrowLeft, CheckCircle, AlertTriangle, AlertCircle, HelpCircle, FileText, Search, Lock } from "lucide-react";
 import { useAuditStore, type AuditItem } from "../hooks/useAudit";
 import { VerifyAssetModal } from "../components/AuditModals";
+import DiscrepancyReport from "../components/DiscrepancyReport";
 
 interface Props {
   auditCycleId: string;
@@ -17,6 +18,7 @@ export default function AuditDetailsPage({ auditCycleId, onBack }: Props) {
   const [verifyModalOpen, setVerifyModalOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState<AuditItem | null>(null);
   const [closing, setClosing] = useState(false);
+  const [quickBusyId, setQuickBusyId] = useState<string | null>(null);
 
   useEffect(() => {
     fetchDetails(auditCycleId);
@@ -35,7 +37,7 @@ export default function AuditDetailsPage({ auditCycleId, onBack }: Props) {
     );
   }
 
-  const { cycle, auditors, items } = currentDetails;
+  const { cycle, auditors, items, discrepancies = [] } = currentDetails;
 
   const handleOpenVerify = (item: AuditItem) => {
     setSelectedItem(item);
@@ -50,11 +52,30 @@ export default function AuditDetailsPage({ auditCycleId, onBack }: Props) {
       notes,
     });
     if (success) {
-      message.success("Asset status logged successfully");
+      message.success(
+        status === "missing" || status === "damaged"
+          ? "Status logged — discrepancy report updated"
+          : "Asset status logged successfully"
+      );
     } else {
       message.error("Failed to log status");
     }
     return success;
+  };
+
+  const handleQuickStatus = async (item: AuditItem, status: "verified" | "missing" | "damaged") => {
+    setQuickBusyId(item.id);
+    const success = await verifyItem({ auditItemId: item.id, status });
+    setQuickBusyId(null);
+    if (success) {
+      message.success(
+        status === "verified"
+          ? "Marked verified"
+          : `Flagged ${status} — discrepancy report updated`
+      );
+    } else {
+      message.error("Failed to update status");
+    }
   };
 
   const handleCloseCampaign = async () => {
@@ -81,14 +102,11 @@ export default function AuditDetailsPage({ auditCycleId, onBack }: Props) {
   const pending = items.filter((i) => i.status === "pending").length;
   const rate = total > 0 ? Math.round(((total - pending) / total) * 100) : 0;
 
-  // Filter items based on query
   const filteredItems = items.filter((i) => {
     if (!searchQuery) return true;
     const q = searchQuery.toLowerCase();
     return i.assetName.toLowerCase().includes(q) || i.assetTag.toLowerCase().includes(q) || i.assetLocation.toLowerCase().includes(q);
   });
-
-  const discrepancyItems = items.filter((i) => i.status === "missing" || i.status === "damaged");
 
   const columns = [
     {
@@ -148,10 +166,36 @@ export default function AuditDetailsPage({ auditCycleId, onBack }: Props) {
       render: (_: unknown, record: AuditItem) => {
         if (cycle.status === "closed") return <Lock className="w-4 h-4 text-gray-600" />;
 
+        const busy = quickBusyId === record.id;
         return (
-          <Button type="primary" size="small" onClick={() => handleOpenVerify(record)}>
-            Verify
-          </Button>
+          <Space size={4} wrap>
+            <Button
+              size="small"
+              type={record.status === "verified" ? "primary" : "default"}
+              loading={busy}
+              onClick={() => handleQuickStatus(record, "verified")}
+            >
+              Verified
+            </Button>
+            <Button
+              size="small"
+              danger={record.status === "missing"}
+              loading={busy}
+              onClick={() => handleQuickStatus(record, "missing")}
+            >
+              Missing
+            </Button>
+            <Button
+              size="small"
+              loading={busy}
+              onClick={() => handleQuickStatus(record, "damaged")}
+            >
+              Damaged
+            </Button>
+            <Button type="link" size="small" onClick={() => handleOpenVerify(record)}>
+              Notes…
+            </Button>
+          </Space>
         );
       },
     },
@@ -276,69 +320,15 @@ export default function AuditDetailsPage({ auditCycleId, onBack }: Props) {
               label: (
                 <span className="flex items-center gap-1">
                   <AlertTriangle className="w-4 h-4 text-red-500" />
-                  Discrepancy Report ({discrepancyItems.length})
+                  Discrepancy Report ({discrepancies.length})
                 </span>
               ),
               children: (
-                <div className="space-y-4 pt-3">
-                  {discrepancyItems.length === 0 ? (
-                    <Alert
-                      message="No discrepancies found"
-                      description="All verified assets are accounted for. No missing or damaged assets reported."
-                      type="success"
-                      showIcon
-                    />
-                  ) : (
-                    <>
-                      <Alert
-                        message={`${discrepancyItems.length} Discrepancies Flagged`}
-                        description="Closing the campaign will auto-reconcile these assets. Missing assets will be set to Lost. Damaged assets will be sent to Maintenance."
-                        type="warning"
-                        showIcon
-                      />
-                      <Table
-                        dataSource={discrepancyItems}
-                        columns={[
-                          {
-                            title: "Asset",
-                            key: "asset",
-                            render: (_: unknown, record: AuditItem) => (
-                              <div>
-                                <span className="font-mono font-bold text-primary mr-2">{record.assetTag}</span>
-                                <span className="text-sm font-semibold text-gray-200">{record.assetName}</span>
-                              </div>
-                            ),
-                          },
-                          {
-                            title: "Audit Finding",
-                            dataIndex: "status",
-                            key: "status",
-                            render: (status: AuditItem["status"]) => (
-                              <Tag color={status === "missing" ? "red" : "pink"}>
-                                {status.toUpperCase()}
-                              </Tag>
-                            ),
-                          },
-                          {
-                            title: "Audit Logs & Findings",
-                            dataIndex: "notes",
-                            key: "notes",
-                            render: (notes: string | null) => (
-                              <span className="text-sm text-gray-300 italic">{notes || "No notes logged"}</span>
-                            ),
-                          },
-                          {
-                            title: "Logged By",
-                            dataIndex: "verifiedByName",
-                            key: "verifiedByName",
-                            render: (name: string | null) => <span className="text-xs text-gray-400">{name}</span>,
-                          },
-                        ]}
-                        rowKey="id"
-                        pagination={false}
-                      />
-                    </>
-                  )}
+                <div className="pt-3">
+                  <DiscrepancyReport
+                    reports={discrepancies}
+                    cycleClosed={cycle.status === "closed"}
+                  />
                 </div>
               ),
             },

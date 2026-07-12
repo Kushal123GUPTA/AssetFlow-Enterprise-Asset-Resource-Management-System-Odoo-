@@ -34,6 +34,21 @@ export interface AuditItem {
   verifiedAt: string | null;
 }
 
+export interface DiscrepancyReportRow {
+  id: string;
+  auditItemId: string;
+  assetId: string;
+  assetTag: string;
+  assetName: string;
+  assetLocation: string;
+  discrepancyType: "missing" | "damaged" | string;
+  notes: string | null;
+  resolutionStatus: "open" | "reconciled" | "cleared" | string;
+  resolvedAt: string | null;
+  createdAt: string;
+  createdByName: string | null;
+}
+
 export interface AuditCycleDetails {
   cycle: {
     id: string;
@@ -46,6 +61,7 @@ export interface AuditCycleDetails {
   };
   auditors: Array<{ employeeId: string; employeeName: string }>;
   items: AuditItem[];
+  discrepancies: DiscrepancyReportRow[];
 }
 
 interface AuditStore {
