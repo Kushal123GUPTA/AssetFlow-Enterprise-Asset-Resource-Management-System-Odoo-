@@ -85,7 +85,7 @@ export default function AssetFormModal({ open, onClose, onSubmit, categories, de
       onOk={() => form.submit()}
       okText={isEdit ? "Update" : "Register Asset"}
       width={680}
-      destroyOnClose
+      destroyOnHidden
     >
       <Form form={form} layout="vertical" onFinish={handleFinish} className="mt-4">
         {/* Photo Upload Section */}

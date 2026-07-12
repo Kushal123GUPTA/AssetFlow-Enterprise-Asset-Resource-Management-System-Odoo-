@@ -232,6 +232,7 @@ export default function EmployeesPage() {
           loading={loading}
           pagination={{ pageSize: 15, showSizeChanger: true }}
           bordered={false}
+          scroll={{ x: 'max-content' }}
           className="overflow-hidden rounded-xl border border-gray-800"
         />
       </Card>
@@ -247,7 +248,7 @@ export default function EmployeesPage() {
         onCancel={() => setModalOpen(false)}
         okText={editing ? "Save Changes" : "Create Employee"}
         okButtonProps={{ className: "bg-[#ff6b00] hover:bg-[#e05e00] border-none" }}
-        destroyOnClose
+        destroyOnHidden
         centered
         width={500}
       >
