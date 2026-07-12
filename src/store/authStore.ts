@@ -15,7 +15,6 @@ interface AuthState {
     name: string;
     email: string;
     password: string;
-    organizationName: string;
   }) => Promise<boolean>;
   login: (data: { email: string; password: string }) => Promise<boolean>;
   requestPasswordReset: (

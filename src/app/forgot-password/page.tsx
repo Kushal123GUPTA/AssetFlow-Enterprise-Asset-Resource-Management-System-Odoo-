@@ -1,12 +1,12 @@
 "use client";
 
 import { Form, Input, Button, Alert } from "antd";
-import { MailOutlined } from "@ant-design/icons";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import axios from "axios";
 import AuthLogo from "@/app/modules/auth/components/AuthLogo";
+import AuthSplitShell from "@/app/modules/auth/components/AuthSplitShell";
 
 export default function ForgotPasswordPage() {
   const router = useRouter();
@@ -40,101 +40,95 @@ export default function ForgotPasswordPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8 bg-white p-8 rounded-xl shadow-lg">
-        <div>
-          <AuthLogo className="mb-6" />
-          <h2 className="mt-2 text-center text-3xl font-extrabold text-gray-100">
-            Forgot password
-          </h2>
-          <p className="mt-2 text-center text-sm text-gray-500">
-            Enter your account email to continue resetting your password.
-          </p>
-        </div>
+    <AuthSplitShell
+      panelSubtitle="Reset your password securely to regain access to your AssetFlow workspace."
+    >
+      <AuthLogo align="start" className="mb-8" />
 
-        {error && (
-          <Alert
-            message={error}
-            type="error"
-            showIcon
-            closable
-            onClose={() => setError(null)}
-          />
-        )}
-
-        {message && (
-          <Alert
-            message={message}
-            type="success"
-            showIcon
-            description={
-              resetPath ? (
-                <div className="mt-2 space-y-3">
-                  <p className="text-sm">
-                    No email provider is configured in this environment. Use the
-                    button below to set a new password (link expires in 1 hour).
-                  </p>
-                  <Button
-                    type="primary"
-                    onClick={() => router.push(resetPath)}
-                    className="bg-blue-600 hover:bg-blue-700"
-                  >
-                    Continue to reset password
-                  </Button>
-                </div>
-              ) : (
-                <p className="text-sm mt-1">
-                  If you don&apos;t see a continue option, no active account was
-                  found for that email.
-                </p>
-              )
-            }
-          />
-        )}
-
-        {!resetPath && (
-          <Form
-            name="forgot_password"
-            layout="vertical"
-            onFinish={onFinish}
-            requiredMark={false}
-            className="mt-4"
-          >
-            <Form.Item
-              name="email"
-              label={<span className="text-gray-700 font-medium">Email Address</span>}
-              rules={[
-                { required: true, message: "Please input your email!" },
-                { type: "email", message: "Please enter a valid email!" },
-              ]}
-            >
-              <Input
-                prefix={<MailOutlined className="text-gray-400" />}
-                placeholder="you@example.com"
-                className="py-2"
-              />
-            </Form.Item>
-
-            <Form.Item className="mb-0 mt-4">
-              <Button
-                type="primary"
-                htmlType="submit"
-                className="w-full bg-blue-600 hover:bg-blue-700 h-10 font-semibold"
-                loading={loading}
-                block
-              >
-                Continue
-              </Button>
-            </Form.Item>
-          </Form>
-        )}
-
-        <p className="text-center text-sm text-gray-500">
-          <Link href="/login" className="font-medium text-primary hover:text-primary-hover">
-            Back to sign in
-          </Link>
+      <div className="mb-6">
+        <h2 className="text-2xl font-extrabold text-slate-900 tracking-tight">
+          Forgot password
+        </h2>
+        <p className="mt-1.5 text-sm text-slate-500">
+          Enter your account email to continue resetting your password.
         </p>
       </div>
-    </div>
+
+      {error && (
+        <Alert
+          message={error}
+          type="error"
+          showIcon
+          closable
+          onClose={() => setError(null)}
+          className="mb-4 rounded-lg"
+        />
+      )}
+
+      {message && (
+        <Alert
+          message={message}
+          type="success"
+          showIcon
+          className="mb-4 rounded-lg"
+          description={
+            resetPath ? (
+              <div className="mt-2 space-y-3">
+                <p className="text-sm">
+                  Use the button below to set a new password (link expires in 1 hour).
+                </p>
+                <Button
+                  type="primary"
+                  onClick={() => router.push(resetPath)}
+                  className="!bg-[#2563eb] hover:!bg-[#1d4ed8] !border-none"
+                >
+                  Continue to reset password
+                </Button>
+              </div>
+            ) : (
+              <p className="text-sm mt-1">
+                If you don&apos;t see a continue option, no active account was found for that
+                email.
+              </p>
+            )
+          }
+        />
+      )}
+
+      {!resetPath && (
+        <Form layout="vertical" onFinish={onFinish} requiredMark={false}>
+          <Form.Item
+            name="email"
+            label={
+              <span className="text-slate-800 font-bold text-[11px] uppercase tracking-wider">
+                E-mail
+              </span>
+            }
+            rules={[
+              { required: true, message: "Please input your email!" },
+              { type: "email", message: "Please enter a valid email!" },
+            ]}
+          >
+            <Input placeholder="Enter e-mail" size="large" className="!rounded-lg" />
+          </Form.Item>
+          <Button
+            type="primary"
+            htmlType="submit"
+            loading={loading}
+            block
+            size="large"
+            className="!h-11 !rounded-lg !bg-[#2563eb] hover:!bg-[#1d4ed8] !border-none !font-bold uppercase"
+          >
+            Continue
+          </Button>
+        </Form>
+      )}
+
+      <p className="text-center mt-8 text-sm text-slate-500">
+        <Link href="/login" className="font-semibold text-[#2563eb] hover:text-[#1d4ed8]">
+          Back to sign in
+        </Link>
+      </p>
+    </AuthSplitShell>
   );
 }
