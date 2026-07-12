@@ -264,7 +264,7 @@ export default function EmployeesPage() {
                 <Input.Password size="large" placeholder="Enter secure password" className="rounded-lg" />
               </Form.Item>
               <Form.Item name="role" label={<span className="font-medium text-[#111827]">Access Role</span>} initialValue="employee">
-                <Select size="large" className="rounded-lg">
+                <Select size="large" className="w-full rounded-lg" style={{ width: "100%" }}>
                   {(Object.entries(ROLE_LABEL) as [Role, string][]).map(([v, l]) => (
                     <Select.Option key={v} value={v}>{l}</Select.Option>
                   ))}
@@ -273,7 +273,7 @@ export default function EmployeesPage() {
             </>
           )}
           <Form.Item name="departmentId" label={<span className="font-medium text-[#111827]">Department</span>}>
-            <Select size="large" allowClear placeholder="Assign to department" className="rounded-lg">
+            <Select size="large" allowClear placeholder="Assign to department" className="w-full rounded-lg" style={{ width: "100%" }}>
               {departments.map((d) => (
                 <Select.Option key={d.id} value={d.id}>{d.name}</Select.Option>
               ))}
@@ -281,7 +281,7 @@ export default function EmployeesPage() {
           </Form.Item>
           {editing && (
             <Form.Item name="status" label={<span className="font-medium text-[#111827]">Account Status</span>}>
-              <Select size="large" className="rounded-lg">
+              <Select size="large" className="w-full rounded-lg" style={{ width: "100%" }}>
                 <Select.Option value="active">Active</Select.Option>
                 <Select.Option value="inactive">Inactive</Select.Option>
               </Select>

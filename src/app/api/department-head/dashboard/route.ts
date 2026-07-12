@@ -155,7 +155,7 @@ export async function POST(req: NextRequest) {
           deptAssets: deptAssetsCount.value,
           allocatedMembers: allocatedCount,
           pendingRequests: pendingRequestsCount,
-          activeBookings: activeBookingsCount,
+          activeBookings: activeBookingsCount.value,
         },
         pendingRequests: pendingRequestsList.map(req => ({
           ...req,

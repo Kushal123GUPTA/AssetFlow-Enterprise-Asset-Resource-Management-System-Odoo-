@@ -2,6 +2,7 @@ import { and, asc, desc, eq, isNull, ne, sql } from "drizzle-orm";
 import { db } from "@/db";
 import { assetCategories, assets, resourceBookings } from "@/db/schema";
 import { isExclusionViolation } from "@/lib/apiAuth";
+import { notifyEmployee } from "@/lib/notifications";
 
 function deriveBookingStatus(
   startTime: string,
@@ -175,6 +176,13 @@ export class BookingService {
           updatedBy: employeeId,
         })
         .returning();
+      await notifyEmployee({
+        employeeId,
+        type: "booking_confirmed",
+        message: `Booking confirmed for ${asset.name} (${asset.assetTag}).`,
+        relatedEntityType: "resource_booking",
+        relatedEntityId: created.id,
+      });
       return { data: created };
     } catch (error) {
       if (isExclusionViolation(error) || isUniqueViolationLike(error)) {
@@ -217,6 +225,14 @@ export class BookingService {
       })
       .where(eq(resourceBookings.id, bookingId))
       .returning();
+
+    await notifyEmployee({
+      employeeId,
+      type: "booking_cancelled",
+      message: `Booking cancelled${reason ? `: ${reason}` : "."}`,
+      relatedEntityType: "resource_booking",
+      relatedEntityId: bookingId,
+    });
 
     return { data: updated };
   }

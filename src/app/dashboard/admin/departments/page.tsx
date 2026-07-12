@@ -162,14 +162,14 @@ export default function DepartmentsPage() {
             <Input size="large" placeholder="e.g. Engineering" className="rounded-lg" />
           </Form.Item>
           <Form.Item name="parentDepartmentId" label={<span className="font-medium text-[#111827]">Parent Department</span>}>
-            <Select size="large" allowClear placeholder="None (top-level)" className="rounded-lg">
+            <Select size="large" allowClear placeholder="None (top-level)" className="w-full rounded-lg" style={{ width: "100%" }}>
               {data.filter((d) => !editing || d.id !== editing.id).map((d) => (
                 <Select.Option key={d.id} value={d.id}>{d.name}</Select.Option>
               ))}
             </Select>
           </Form.Item>
           <Form.Item name="headEmployeeId" label={<span className="font-medium text-[#111827]">Department Head</span>}>
-            <Select size="large" allowClear placeholder="Select employee" showSearch optionFilterProp="children" className="rounded-lg">
+            <Select size="large" allowClear placeholder="Select employee" showSearch optionFilterProp="children" className="w-full rounded-lg" style={{ width: "100%" }}>
               {employees.map((e) => (
                 <Select.Option key={e.id} value={e.id}>{e.name}</Select.Option>
               ))}
@@ -177,7 +177,7 @@ export default function DepartmentsPage() {
           </Form.Item>
           {editing && (
             <Form.Item name="status" label={<span className="font-medium text-[#111827]">Status</span>}>
-              <Select size="large" className="rounded-lg">
+              <Select size="large" className="w-full rounded-lg" style={{ width: "100%" }}>
                 <Select.Option value="active">Active</Select.Option>
                 <Select.Option value="inactive">Inactive</Select.Option>
               </Select>

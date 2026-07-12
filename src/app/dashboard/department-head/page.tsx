@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Package, GitMerge, ArrowLeftRight, Calendar, CheckCircle2, Clock, XCircle, ArrowRight, Users } from "lucide-react";
+import { Package, GitMerge, ArrowLeftRight, Calendar, CheckCircle2, Clock, XCircle, ArrowRight, Users, RefreshCw } from "lucide-react";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
 import { useDepartmentHeadStore } from "@/store/departmentHeadStore";
@@ -52,14 +52,6 @@ export default function DepartmentHeadDashboard() {
     }
   };
 
-  if (isLoading && !dashboardData) {
-    return (
-      <div className="flex items-center justify-center h-96">
-        <Spin size="default" />
-      </div>
-    );
-  }
-
   const kpis = dashboardData?.kpis || {
     deptAssets: 0,
     allocatedMembers: 0,
@@ -68,10 +60,38 @@ export default function DepartmentHeadDashboard() {
   };
 
   const KPI_CARDS = [
-    { label: "Dept Assets", value: String(kpis.deptAssets), change: "All tracked in home dept", icon: Package, color: "from-emerald-500 to-teal-500", bg: "bg-emerald-500/10 border-emerald-500/20" },
-    { label: "Allocated to Members", value: String(kpis.allocatedMembers), change: "Held by employees", icon: Users, color: "from-blue-500 to-cyan-500", bg: "bg-blue-500/10 border-blue-500/20" },
-    { label: "Pending Requests", value: String(kpis.pendingRequests), change: "Needs review", icon: GitMerge, color: "from-violet-500 to-purple-600", bg: "bg-violet-500/10 border-violet-500/20" },
-    { label: "Active Bookings", value: String(kpis.activeBookings), change: "Upcoming bookings", icon: Calendar, color: "from-amber-500 to-orange-500", bg: "bg-amber-500/10 border-amber-500/20" },
+    {
+      label: "Dept Assets",
+      value: kpis.deptAssets,
+      change: "All tracked in home dept",
+      icon: Package,
+      color: "from-emerald-500 to-teal-500",
+      bg: "bg-emerald-500/10 border-emerald-500/20",
+    },
+    {
+      label: "Allocated to Members",
+      value: kpis.allocatedMembers,
+      change: "Held by employees",
+      icon: Users,
+      color: "from-blue-500 to-cyan-500",
+      bg: "bg-blue-500/10 border-blue-500/20",
+    },
+    {
+      label: "Pending Requests",
+      value: kpis.pendingRequests,
+      change: "Needs review",
+      icon: GitMerge,
+      color: "from-violet-500 to-purple-600",
+      bg: "bg-violet-500/10 border-violet-500/20",
+    },
+    {
+      label: "Active Bookings",
+      value: kpis.activeBookings,
+      change: "Upcoming bookings",
+      icon: Calendar,
+      color: "from-amber-500 to-orange-500",
+      bg: "bg-amber-500/10 border-amber-500/20",
+    },
   ];
 
   const pendingRequests = dashboardData?.pendingRequests || [];
@@ -79,11 +99,22 @@ export default function DepartmentHeadDashboard() {
   return (
     <div className="space-y-8 max-w-7xl">
       {/* Header */}
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900">Department Overview</h1>
-        <p className="text-gray-400 mt-1 text-sm">
-          Welcome, {session?.user?.name} · Department Head · Engineering
-        </p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-100">Department Overview</h1>
+          <p className="text-gray-500 mt-1 text-sm">
+            Welcome, {session?.user?.name} · Department Head · Manage assets and approve member requests
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={() => fetchDashboardData()}
+          disabled={isLoading}
+          className="flex items-center gap-2 px-3 py-1.5 rounded-xl border-none text-sm font-semibold transition-all disabled:opacity-50 !bg-gray-800/80 !text-gray-200 hover:!bg-gray-700/80 cursor-pointer"
+        >
+          <RefreshCw className={`w-4 h-4 ${isLoading ? "animate-spin" : ""}`} />
+          Refresh
+        </button>
       </div>
 
       {/* KPIs */}
@@ -91,15 +122,17 @@ export default function DepartmentHeadDashboard() {
         {KPI_CARDS.map((kpi) => {
           const Icon = kpi.icon;
           return (
-            <div key={kpi.label} className={`rounded-2xl border p-5 ${kpi.bg}`}>
+            <div key={kpi.label} className={`rounded-2xl border p-5 ${kpi.bg} backdrop-blur-sm transition-all hover:scale-[1.01]`}>
               <div className="flex items-start justify-between">
                 <div>
-                  <p className="text-gray-400 text-xs font-medium uppercase tracking-wider">{kpi.label}</p>
-                  <p className="text-3xl font-bold text-gray-900 mt-1">{kpi.value}</p>
-                  <p className="text-gray-500 text-xs mt-1">{kpi.change}</p>
+                  <p className="text-gray-600 text-[10px] font-bold uppercase tracking-wider">{kpi.label}</p>
+                  <p className="text-3xl font-extrabold text-gray-100 mt-1.5">
+                    {isLoading ? "..." : kpi.value}
+                  </p>
+                  <p className="text-gray-500 text-xs mt-1 font-semibold">{kpi.change}</p>
                 </div>
-                <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${kpi.color} flex items-center justify-center shrink-0`}>
-                  <Icon className="w-5 h-5 text-white" />
+                <div className={`w-9 h-9 rounded-lg bg-gradient-to-br ${kpi.color} flex items-center justify-center shrink-0`}>
+                  <Icon className="w-4 h-4 text-white" />
                 </div>
               </div>
             </div>
@@ -109,8 +142,8 @@ export default function DepartmentHeadDashboard() {
 
       {/* Modules */}
       <div>
-        <h2 className="text-gray-200 font-semibold mb-4">Department Modules</h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <h2 className="text-gray-100 font-bold mb-4 text-base">Department Modules</h2>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {QUICK_LINKS.map((link) => {
             const Icon = link.icon;
             return (
@@ -123,8 +156,8 @@ export default function DepartmentHeadDashboard() {
                   <Icon className="w-5 h-5 text-emerald-400" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-gray-100 font-medium text-sm">{link.label}</p>
-                  <p className="text-gray-500 text-xs mt-0.5">{link.desc}</p>
+                  <p className="text-gray-200 font-semibold text-sm group-hover:text-emerald-400 transition-colors">{link.label}</p>
+                  <p className="text-gray-500 text-xs mt-0.5 truncate font-medium">{link.desc}</p>
                 </div>
                 <ArrowRight className="w-4 h-4 text-gray-600 group-hover:text-emerald-400 group-hover:translate-x-0.5 transition-all shrink-0" />
               </Link>
@@ -140,16 +173,16 @@ export default function DepartmentHeadDashboard() {
           <div>
             <div className="flex items-center gap-2 mb-4">
               <Package className="w-4 h-4 text-emerald-400" />
-              <h3 className="text-gray-200 font-semibold text-sm">Active Resources & Bookings</h3>
+              <h3 className="text-gray-200 font-bold text-sm">Active Resources & Bookings</h3>
             </div>
-            <p className="text-gray-400 text-sm leading-relaxed">
+            <p className="text-gray-500 text-sm leading-relaxed font-medium">
               As a Department Head, you are responsible for approving physical transfers of devices (e.g. laptops, monitors, mobile devices) within your department. You can also view department assets, verify they are in clean condition, and make conflict-free bookings on behalf of your team members.
             </p>
           </div>
           <div className="mt-6 flex gap-4">
             <Link
               href="/dashboard/department-head/assets"
-              className="px-4 py-2 text-xs font-semibold text-white bg-emerald-600 hover:bg-emerald-500 rounded-xl transition-all"
+              className="px-4 py-2 text-xs font-semibold text-white bg-emerald-600 hover:bg-emerald-500 rounded-xl transition-all border-none"
             >
               Manage Assets
             </Link>
@@ -166,35 +199,37 @@ export default function DepartmentHeadDashboard() {
         <div className="rounded-2xl bg-gray-900 border border-gray-800 p-6">
           <div className="flex items-center gap-2 mb-4">
             <Clock className="w-4 h-4 text-amber-400" />
-            <h3 className="text-gray-200 font-semibold text-sm">Pending Approval Requests</h3>
+            <h3 className="text-gray-200 font-bold text-sm">Pending Approval Requests</h3>
           </div>
           <div className="space-y-3">
-            {pendingRequests.length === 0 ? (
-              <p className="text-gray-500 text-sm py-4 text-center">No pending approvals</p>
+            {isLoading ? (
+              <div className="text-center text-xs text-gray-500 py-6">Loading pending approvals...</div>
+            ) : pendingRequests.length === 0 ? (
+              <p className="text-gray-500 text-sm py-8 text-center font-medium">No pending approvals</p>
             ) : (
               pendingRequests.map((req) => (
-                <div key={req.id} className="flex items-center justify-between py-2.5 px-3 rounded-xl bg-gray-800/60 border border-gray-700/50">
+                <div key={req.id} className="flex items-center justify-between py-2.5 px-3 rounded-xl bg-gray-950 border border-gray-800">
                   <div className="min-w-0 flex-1 pr-4">
-                    <p className="text-gray-200 text-sm font-medium truncate">{req.toEmployeeName || "Department Pool"}</p>
-                    <p className="text-gray-500 text-xs mt-0.5 truncate">
-                      {req.type === "Allocation" ? "Allocate" : `Transfer from ${req.fromEmployeeName}`} · <span className="text-emerald-400">{req.assetName} ({req.assetTag})</span>
+                    <p className="text-gray-200 text-sm font-semibold truncate">{req.toEmployeeName || "Department Pool"}</p>
+                    <p className="text-gray-500 text-xs mt-0.5 truncate font-medium">
+                      {req.type === "Allocation" ? "Allocate" : `Transfer from ${req.fromEmployeeName}`} · <span className="text-emerald-400 font-semibold">{req.assetName} ({req.assetTag})</span>
                     </p>
                   </div>
                   <div className="flex items-center gap-2 shrink-0">
-                    <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${req.type === "Allocation" ? "bg-blue-500/15 text-blue-400" : "bg-violet-500/15 text-violet-400"}`}>
+                    <span className={`text-xs px-2 py-0.5 rounded-full font-bold ${req.type === "Allocation" ? "bg-blue-500/15 text-blue-400" : "bg-violet-500/15 text-violet-400"}`}>
                       {req.type}
                     </span>
                     <div className="flex gap-1">
                       <button
                         onClick={() => handleApprove(req.id)}
-                        className="w-6 h-6 rounded-md bg-emerald-500/20 flex items-center justify-center hover:bg-emerald-500/40 transition-colors"
+                        className="w-6 h-6 rounded-md bg-emerald-500/20 flex items-center justify-center hover:bg-emerald-500/40 border-none cursor-pointer"
                         title="Approve"
                       >
                         <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
                       </button>
                       <button
                         onClick={() => setRejectId(req.id)}
-                        className="w-6 h-6 rounded-md bg-red-500/20 flex items-center justify-center hover:bg-red-500/40 transition-colors"
+                        className="w-6 h-6 rounded-md bg-red-500/20 flex items-center justify-center hover:bg-red-500/40 border-none cursor-pointer"
                         title="Reject"
                       >
                         <XCircle className="w-3.5 h-3.5 text-red-400" />
@@ -210,7 +245,7 @@ export default function DepartmentHeadDashboard() {
 
       {/* Reject Reason Modal */}
       <Modal
-        title="Reject Request"
+        title={<span className="text-gray-100 font-bold">Reject Request</span>}
         open={rejectId !== null}
         onOk={handleRejectSubmit}
         onCancel={() => {
@@ -219,14 +254,16 @@ export default function DepartmentHeadDashboard() {
         }}
         okText="Confirm Reject"
         cancelText="Cancel"
+        okButtonProps={{ className: "bg-red-500 hover:bg-red-600 border-none text-white font-semibold" }}
       >
         <div className="space-y-3 py-3">
-          <p className="text-sm text-gray-600">Please provide a reason for rejecting this transfer/allocation request:</p>
+          <p className="text-sm text-gray-500 font-medium">Please provide a reason for rejecting this transfer/allocation request:</p>
           <Input.TextArea
             rows={4}
             value={rejectReason}
             onChange={(e) => setRejectReason(e.target.value)}
             placeholder="E.g., Device is currently needed for a critical task / Incorrect recipient."
+            className="w-full rounded-lg"
           />
         </div>
       </Modal>

@@ -1,1 +1,7 @@
-export { useAuditStore, type AuditCycle, type AuditItem, type AuditCycleDetails } from "./hooks/useAudit";
+export {
+  useAuditStore,
+  type AuditCycle,
+  type AuditItem,
+  type AuditCycleDetails,
+  type DiscrepancyReportRow,
+} from "./hooks/useAudit";

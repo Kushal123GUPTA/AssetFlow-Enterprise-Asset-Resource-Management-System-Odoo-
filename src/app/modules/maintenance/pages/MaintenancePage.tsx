@@ -2,13 +2,14 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { Table, Button, Input, Select, Tag, Tooltip, message, Popconfirm } from "antd";
-import { RefreshCw, Plus, Search, Wrench, CheckCircle, XCircle, UserCheck } from "lucide-react";
+import { RefreshCw, Plus, Search, Wrench, CheckCircle, XCircle, UserCheck, Play, LayoutGrid, List } from "lucide-react";
 import { useMaintenanceStore, type MaintenanceRequest } from "../hooks/useMaintenance";
 import {
   AssignTechnicianModal,
   ResolveMaintenanceModal,
   RaiseMaintenanceModal,
 } from "../components/MaintenanceModals";
+import MaintenanceKanban from "../components/MaintenanceKanban";
 
 export default function MaintenancePage() {
   const {
@@ -19,12 +20,14 @@ export default function MaintenancePage() {
     approveRequest,
     rejectRequest,
     assignTechnician,
+    startProgress,
     resolveRequest,
   } = useMaintenanceStore();
 
   const [searchQuery, setSearchQuery] = useState("");
-  const [statusFilter, setStatusFilter] = useState<string>("pending");
+  const [statusFilter, setStatusFilter] = useState<string>("");
   const [priorityFilter, setPriorityFilter] = useState<string>("");
+  const [viewMode, setViewMode] = useState<"kanban" | "table">("kanban");
 
   // Modal States
   const [raiseOpen, setRaiseOpen] = useState(false);
@@ -46,7 +49,7 @@ export default function MaintenancePage() {
   const handleApprove = async (id: string) => {
     const success = await approveRequest(id);
     if (success) {
-      message.success("Ticket approved. Ready for technician assignment.");
+      message.success("Approved — asset moved to Under Maintenance.");
       loadRequests();
     } else {
       message.error("Failed to approve ticket");
@@ -103,6 +106,16 @@ export default function MaintenancePage() {
   const handleOpenResolve = (req: MaintenanceRequest) => {
     setSelectedRequest(req);
     setResolveOpen(true);
+  };
+
+  const handleStart = async (id: string) => {
+    const success = await startProgress(id);
+    if (success) {
+      message.success("Marked in progress");
+      loadRequests();
+    } else {
+      message.error("Failed to start work");
+    }
   };
 
   // Filter requests locally on search query
@@ -235,7 +248,31 @@ export default function MaintenancePage() {
           );
         }
 
-        if (record.status === "technician_assigned" || record.status === "in_progress") {
+        if (record.status === "technician_assigned") {
+          return (
+            <div className="flex gap-2">
+              <Button
+                type="primary"
+                size="small"
+                icon={<Play className="w-3.5 h-3.5 mr-1" />}
+                onClick={() => handleStart(record.id)}
+                className="flex items-center"
+              >
+                Start
+              </Button>
+              <Button
+                size="small"
+                icon={<Wrench className="w-3.5 h-3.5 mr-1" />}
+                onClick={() => handleOpenResolve(record)}
+                className="flex items-center"
+              >
+                Resolve
+              </Button>
+            </div>
+          );
+        }
+
+        if (record.status === "in_progress") {
           return (
             <Button
               type="primary"
@@ -263,6 +300,12 @@ export default function MaintenancePage() {
           <p className="text-gray-500 text-sm mt-1">Assign technicians, track repairs, and manage maintenance tickets</p>
         </div>
         <div className="flex items-center gap-2">
+          <Button
+            icon={viewMode === "kanban" ? <List className="w-4 h-4" /> : <LayoutGrid className="w-4 h-4" />}
+            onClick={() => setViewMode((v) => (v === "kanban" ? "table" : "kanban"))}
+          >
+            {viewMode === "kanban" ? "Table" : "Kanban"}
+          </Button>
           <Button icon={<RefreshCw className="w-4 h-4" />} onClick={loadRequests}>
             Refresh
           </Button>
@@ -296,6 +339,7 @@ export default function MaintenancePage() {
             { label: "Pending Approval", value: "pending" },
             { label: "Approved", value: "approved" },
             { label: "Tech Assigned", value: "technician_assigned" },
+            { label: "In Progress", value: "in_progress" },
             { label: "Resolved", value: "resolved" },
             { label: "Rejected", value: "rejected" },
           ]}
@@ -315,7 +359,16 @@ export default function MaintenancePage() {
         />
       </div>
 
-      {/* Table */}
+      {viewMode === "kanban" ? (
+        <MaintenanceKanban
+          requests={filteredRequests}
+          onApprove={handleApprove}
+          onReject={handleReject}
+          onAssign={handleOpenAssign}
+          onStart={handleStart}
+          onResolve={handleOpenResolve}
+        />
+      ) : (
       <div className="rounded-2xl border border-gray-700 bg-gray-900 overflow-hidden">
         <Table
           dataSource={filteredRequests}
@@ -326,6 +379,7 @@ export default function MaintenancePage() {
           scroll={{ x: 900 }}
         />
       </div>
+      )}
 
       {/* Assign Technician Modal */}
       <AssignTechnicianModal
