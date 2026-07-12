@@ -14,7 +14,7 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json();
-    const { id, name, categoryId, serialNumber, acquisitionDate, acquisitionCost, condition, location, departmentId, isBookable, status, photoUrl } = body;
+    const { id, name, categoryId, serialNumber, acquisitionDate, acquisitionCost, condition, location, departmentId, isBookable, status, photoUrl, documents } = body;
 
     if (!id) {
       return NextResponse.json({ error: "Asset ID is required" }, { status: 400 });
@@ -46,6 +46,7 @@ export async function POST(req: NextRequest) {
     if (isBookable !== undefined) updateData.isBookable = isBookable;
     if (status !== undefined) updateData.status = status;
     if (photoUrl !== undefined) updateData.photoUrl = photoUrl || null;
+    if (documents !== undefined) updateData.documents = Array.isArray(documents) ? documents : [];
 
     const updated = await db
       .update(assets)

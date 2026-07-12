@@ -17,6 +17,8 @@ import {
   Clock,
   CheckCircle2,
   Sparkles,
+  Wrench,
+  Calendar,
 } from "lucide-react";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
@@ -27,6 +29,24 @@ import relativeTime from "dayjs/plugin/relativeTime";
 dayjs.extend(relativeTime);
 
 const QUICK_LINKS = [
+  {
+    label: "Register Asset",
+    href: "/dashboard/asset-manager/assets",
+    icon: Package,
+    desc: "Add assets to the registry",
+  },
+  {
+    label: "Book Resource",
+    href: "/dashboard/employee/bookings",
+    icon: Calendar,
+    desc: "Reserve a shared resource",
+  },
+  {
+    label: "Raise Maintenance",
+    href: "/dashboard/employee/maintenance",
+    icon: Wrench,
+    desc: "Report an issue for repair",
+  },
   {
     label: "Departments",
     href: "/dashboard/admin/departments",
@@ -81,6 +101,7 @@ export default function AdminDashboard() {
 
   useEffect(() => {
     fetchDashboard();
+    void fetch("/api/notifications/jobs/dispatch").catch(() => {});
   }, []);
 
   const kpis = [
@@ -185,7 +206,7 @@ export default function AdminDashboard() {
       {/* Module Quick Links */}
       <div>
         <h2 className="text-gray-100 font-bold mb-4 text-base">Administrative Modules</h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
           {QUICK_LINKS.map((link) => {
             const Icon = link.icon;
             return (

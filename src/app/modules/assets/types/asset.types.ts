@@ -35,6 +35,7 @@ export interface AssetFormData {
   departmentId?: string;
   isBookable?: boolean;
   photoUrl?: string;
+  documents?: Array<{ name: string; url: string }>;
 }
 
 export interface AssetFilters {

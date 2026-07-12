@@ -7,9 +7,7 @@ import { signOut, useSession } from "next-auth/react";
 import {
   LayoutDashboard,
   Building2,
-  Tag,
   ClipboardList,
-  Users,
   BarChart3,
   Package,
   GitMerge,
@@ -21,7 +19,6 @@ import {
   Bell,
   LogOut,
   ChevronRight,
-  Plus,
 } from "lucide-react";
 
 type NavItem = {
@@ -33,11 +30,10 @@ type NavItem = {
 const NAV_BY_ROLE: Record<string, NavItem[]> = {
   admin: [
     { label: "Dashboard", href: "/dashboard/admin", icon: LayoutDashboard },
-    { label: "Departments", href: "/dashboard/admin/departments", icon: Building2 },
-    { label: "Asset Categories", href: "/dashboard/admin/categories", icon: Tag },
+    { label: "Organization Setup", href: "/dashboard/admin/organization", icon: Building2 },
     { label: "Audit Cycles", href: "/dashboard/admin/audit-cycles", icon: ClipboardList },
-    { label: "Employees & Roles", href: "/dashboard/admin/employees", icon: Users },
     { label: "Analytics", href: "/dashboard/admin/analytics", icon: BarChart3 },
+    { label: "Activity Logs", href: "/dashboard/admin/activity", icon: ClipboardList },
     { label: "Notifications", href: "/dashboard/notifications", icon: Bell },
   ],
   asset_manager: [

@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/authOptions";
 import { db } from "@/db";
 import { assets, assetAllocations, assetStatusHistory } from "@/db/schema";
 import { eq, and, isNull } from "drizzle-orm";
+import { logActivity } from "@/lib/activityLog";
 
 // POST /api/assets/return — Return allocated asset
 export async function POST(req: NextRequest) {
@@ -87,6 +88,15 @@ export async function POST(req: NextRequest) {
       toStatus: targetStatus,
       changedBy: session.user.id,
       reason: `Returned by user. Return condition: ${condition}. Notes: ${checkInNotes ?? ""}`,
+    });
+
+    await logActivity({
+      organizationId,
+      employeeId: session.user.id,
+      action: "asset_returned",
+      entityType: "allocation",
+      entityId: allocationId,
+      details: { assetId: alloc.assetId, condition, targetStatus },
     });
 
     return NextResponse.json({ data: updatedAllocation[0] });
