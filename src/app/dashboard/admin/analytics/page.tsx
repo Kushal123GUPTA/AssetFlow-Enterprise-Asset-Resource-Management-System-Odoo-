@@ -11,6 +11,7 @@ import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
 import Card from "@/app/shared/components/Card";
 import PageHeader, { PageShell } from "@/app/shared/components/PageHeader";
+import ReportExportActions from "@/app/modules/reports/components/ReportExportActions";
 
 dayjs.extend(relativeTime);
 
@@ -56,6 +57,13 @@ export default function AnalyticsPage() {
         eyebrow="Insights"
         title="Organization-wide Analytics"
         description="Utilization, maintenance frequency, and asset lifecycles"
+        actions={
+          <ReportExportActions
+            utilization={utilization}
+            maintenance={maintenance}
+            assets={assets}
+          />
+        }
       />
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">

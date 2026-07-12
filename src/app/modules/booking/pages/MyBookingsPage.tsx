@@ -6,6 +6,7 @@ import { bookingService } from "../services/BookingService";
 import type { BookableResource, MyBooking } from "../types/booking.types";
 import { ApiError } from "@/lib/fetchJson";
 import PageHeader, { PageShell } from "@/app/shared/components/PageHeader";
+import BookingCalendar from "../components/BookingCalendar";
 
 function toLocalInputValue(iso: string) {
   const d = new Date(iso);
@@ -237,6 +238,20 @@ export default function MyBookingsPage() {
           <p className="text-gray-500 text-xs">No bookable resources found.</p>
         )}
       </form>
+
+      <BookingCalendar
+        assetId={selectedAssetId}
+        assetLabel={
+          resources.find((r) => r.id === selectedAssetId)
+            ? `${resources.find((r) => r.id === selectedAssetId)!.name} (${resources.find((r) => r.id === selectedAssetId)!.assetTag})`
+            : undefined
+        }
+        onPickSlot={(start, end) => {
+          setStartTime(start);
+          setEndTime(end);
+          setMessage("Slot selected from calendar — review times and book.");
+        }}
+      />
 
       <section className="rounded-2xl bg-gray-900 border border-gray-800 p-5">
         <div className="flex items-center gap-2 mb-4">

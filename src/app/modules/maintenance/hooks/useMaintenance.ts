@@ -11,7 +11,13 @@ export interface MaintenanceRequest {
   issueDescription: string;
   priority: "low" | "medium" | "high" | "critical";
   photoUrl: string | null;
-  status: "pending" | "approved" | "rejected" | "technician_assigned" | "in_progress" | "resolved";
+  status:
+    | "pending"
+    | "approved"
+    | "rejected"
+    | "technician_assigned"
+    | "in_progress"
+    | "resolved";
   approvedBy: string | null;
   approvedByName: string | null;
   approvedAt: string | null;
@@ -38,6 +44,7 @@ interface MaintenanceStore {
   approveRequest: (requestId: string) => Promise<boolean>;
   rejectRequest: (requestId: string, rejectionReason: string) => Promise<boolean>;
   assignTechnician: (requestId: string, technicianName: string) => Promise<boolean>;
+  startProgress: (requestId: string) => Promise<boolean>;
   resolveRequest: (data: {
     requestId: string;
     resolutionNotes?: string;
@@ -57,7 +64,10 @@ export const useMaintenanceStore = create<MaintenanceStore>((set, get) => ({
       const res = await axios.post("/api/assets/maintenance/list", filters || {});
       set({ requests: res.data.data, loading: false });
     } catch (err: any) {
-      set({ error: err.response?.data?.error ?? "Failed to fetch maintenance list", loading: false });
+      set({
+        error: err.response?.data?.error ?? "Failed to fetch maintenance list",
+        loading: false,
+      });
     }
   },
 
@@ -85,7 +95,10 @@ export const useMaintenanceStore = create<MaintenanceStore>((set, get) => ({
 
   rejectRequest: async (requestId, rejectionReason) => {
     try {
-      await axios.post("/api/assets/maintenance/reject", { requestId, rejectionReason });
+      await axios.post("/api/assets/maintenance/reject", {
+        requestId,
+        rejectionReason,
+      });
       await get().fetchRequests();
       return true;
     } catch (err: any) {
@@ -96,11 +109,25 @@ export const useMaintenanceStore = create<MaintenanceStore>((set, get) => ({
 
   assignTechnician: async (requestId, technicianName) => {
     try {
-      await axios.post("/api/assets/maintenance/assign", { requestId, technicianName });
+      await axios.post("/api/assets/maintenance/assign", {
+        requestId,
+        technicianName,
+      });
       await get().fetchRequests();
       return true;
     } catch (err: any) {
       console.error("Failed to assign technician:", err);
+      return false;
+    }
+  },
+
+  startProgress: async (requestId) => {
+    try {
+      await axios.post("/api/assets/maintenance/start", { requestId });
+      await get().fetchRequests();
+      return true;
+    } catch (err: any) {
+      console.error("Failed to start maintenance:", err);
       return false;
     }
   },

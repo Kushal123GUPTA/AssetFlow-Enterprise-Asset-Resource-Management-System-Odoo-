@@ -2,10 +2,10 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/authOptions";
 import { db } from "@/db";
-import { assets, maintenanceRequests, assetStatusHistory } from "@/db/schema";
+import { assets, maintenanceRequests } from "@/db/schema";
 import { eq } from "drizzle-orm";
 
-// POST /api/assets/maintenance/raise — Create a maintenance ticket and mark asset under maintenance
+/** Raise a ticket only — asset stays as-is until approval (spec). */
 export async function POST(req: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
@@ -16,11 +16,23 @@ export async function POST(req: NextRequest) {
     const { assetId, issueDescription, priority, photoUrl } = await req.json();
 
     if (!assetId || !issueDescription) {
-      return NextResponse.json({ error: "Asset ID and issue description are required" }, { status: 400 });
+      return NextResponse.json(
+        { error: "Asset ID and issue description are required" },
+        { status: 400 }
+      );
     }
 
-    // Insert maintenance request
-    const ticket = await db
+    const [asset] = await db
+      .select({ id: assets.id, name: assets.name, assetTag: assets.assetTag })
+      .from(assets)
+      .where(eq(assets.id, assetId))
+      .limit(1);
+
+    if (!asset) {
+      return NextResponse.json({ error: "Asset not found" }, { status: 404 });
+    }
+
+    const [ticket] = await db
       .insert(maintenanceRequests)
       .values({
         assetId,
@@ -29,39 +41,17 @@ export async function POST(req: NextRequest) {
         priority: priority || "medium",
         photoUrl: photoUrl || null,
         status: "pending",
+        createdBy: session.user.id,
+        updatedBy: session.user.id,
       })
       .returning();
 
-    // Fetch current status of asset for history log
-    const assetRecord = await db
-      .select({ status: assets.status })
-      .from(assets)
-      .where(eq(assets.id, assetId))
-      .limit(1);
-
-    const fromStatus = assetRecord[0]?.status ?? "available";
-
-    // Transition asset status to under_maintenance
-    await db
-      .update(assets)
-      .set({
-        status: "under_maintenance",
-        updatedBy: session.user.id,
-      })
-      .where(eq(assets.id, assetId));
-
-    // Log status history
-    await db.insert(assetStatusHistory).values({
-      assetId,
-      fromStatus,
-      toStatus: "under_maintenance",
-      changedBy: session.user.id,
-      reason: `Maintenance ticket raised: ${issueDescription}`,
-    });
-
-    return NextResponse.json({ data: ticket[0] });
+    return NextResponse.json({ data: ticket });
   } catch (error: any) {
     console.error("RAISE maintenance error:", error);
-    return NextResponse.json({ error: error.message ?? "Internal Server Error" }, { status: 500 });
+    return NextResponse.json(
+      { error: error.message ?? "Internal Server Error" },
+      { status: 500 }
+    );
   }
 }
