@@ -18,7 +18,7 @@ export default function AssetFilterBar({ filters, categories, departments, onCha
   return (
     <div className="flex flex-wrap items-center gap-3">
       <Input
-        placeholder="Search by name, tag, serial..."
+        placeholder="Search by name, tag, serial, QR, location…"
         prefix={<Search className="w-4 h-4 text-gray-400" />}
         value={filters.search ?? ""}
         onChange={(e) => update({ search: e.target.value })}
@@ -52,6 +52,13 @@ export default function AssetFilterBar({ filters, categories, departments, onCha
         optionFilterProp="label"
         className="!w-44"
         options={departments.map((d) => ({ label: d.name, value: d.id }))}
+      />
+      <Input
+        placeholder="Location"
+        value={filters.location ?? ""}
+        onChange={(e) => update({ location: e.target.value })}
+        allowClear
+        className="!w-44"
       />
     </div>
   );

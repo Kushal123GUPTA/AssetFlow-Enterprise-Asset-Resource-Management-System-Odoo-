@@ -5,6 +5,7 @@ import { db } from "@/db";
 import { assets, assetAllocations, transferRequests, assetStatusHistory } from "@/db/schema";
 import { eq, and, isNull } from "drizzle-orm";
 import { notifyEmployee, notifyEmployees } from "@/lib/notifications";
+import { logActivity } from "@/lib/activityLog";
 
 // POST /api/assets/transfer-approve — Approve and process a transfer request
 export async function POST(req: NextRequest) {
@@ -126,6 +127,15 @@ export async function POST(req: NextRequest) {
       message: `Transfer approved for ${assetMeta?.assetTag ?? "asset"} — ${assetMeta?.name ?? "item"}.`,
       relatedEntityType: "transfer_request",
       relatedEntityId: transferId,
+    });
+
+    await logActivity({
+      organizationId,
+      employeeId: session.user.id,
+      action: "transfer_approved",
+      entityType: "transfer_request",
+      entityId: transferId,
+      details: { assetId: transfer.assetId, allocationId: newAllocId },
     });
 
     return NextResponse.json({ data: { success: true, allocationId: newAllocId } });

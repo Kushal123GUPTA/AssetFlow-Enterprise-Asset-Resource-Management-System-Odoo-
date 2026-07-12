@@ -1,3 +1,1 @@
-export default function RetirementSummary() {
-  return null;
-}
+export { default } from "./AssetsDueList";

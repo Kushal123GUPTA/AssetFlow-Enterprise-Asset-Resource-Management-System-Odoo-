@@ -2,8 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/authOptions";
 import { db } from "@/db";
-import { assets, assetAllocations, transferRequests, maintenanceRequests, employees } from "@/db/schema";
-import { eq, and, isNull, count, sql, desc, inArray } from "drizzle-orm";
+import { assets, assetAllocations, transferRequests, maintenanceRequests, employees, resourceBookings } from "@/db/schema";
+import { eq, and, isNull, count, sql, desc, inArray, or } from "drizzle-orm";
 
 // POST /api/assets/dashboard-stats — Fetch real stats and listings for the dashboard
 export async function POST(req: NextRequest) {
@@ -76,6 +76,72 @@ export async function POST(req: NextRequest) {
         )
       );
 
+    // Available assets
+    const [availableCountRes] = await db
+      .select({ val: count() })
+      .from(assets)
+      .where(
+        and(
+          eq(assets.organizationId, organizationId),
+          eq(assets.status, "available"),
+          isNull(assets.deletedAt)
+        )
+      );
+
+    // Allocated assets
+    const [allocatedCountRes] = await db
+      .select({ val: count() })
+      .from(assets)
+      .where(
+        and(
+          eq(assets.organizationId, organizationId),
+          eq(assets.status, "allocated"),
+          isNull(assets.deletedAt)
+        )
+      );
+
+    // Under maintenance assets (used as maintenanceTodayCount)
+    const [maintenanceTodayRes] = await db
+      .select({ val: count() })
+      .from(assets)
+      .where(
+        and(
+          eq(assets.organizationId, organizationId),
+          eq(assets.status, "under_maintenance"),
+          isNull(assets.deletedAt)
+        )
+      );
+
+    // Active bookings (upcoming or ongoing)
+    const [activeBookingsRes] = await db
+      .select({ val: count() })
+      .from(resourceBookings)
+      .innerJoin(assets, eq(resourceBookings.assetId, assets.id))
+      .where(
+        and(
+          eq(assets.organizationId, organizationId),
+          or(
+            eq(resourceBookings.status, "upcoming"),
+            eq(resourceBookings.status, "ongoing")
+          ),
+          isNull(resourceBookings.deletedAt)
+        )
+      );
+
+    // Upcoming returns (active allocations with expectedReturnDate >= today)
+    const [upcomingReturnsRes] = await db
+      .select({ val: count() })
+      .from(assetAllocations)
+      .innerJoin(assets, eq(assetAllocations.assetId, assets.id))
+      .where(
+        and(
+          eq(assets.organizationId, organizationId),
+          eq(assetAllocations.status, "active"),
+          sql`${assetAllocations.expectedReturnDate} >= ${nowStr}`,
+          isNull(assetAllocations.deletedAt)
+        )
+      );
+
     // 2. Fetch recent maintenance requests (limit 3)
     const recentMaintenance = await db
       .select({
@@ -132,13 +198,21 @@ export async function POST(req: NextRequest) {
       });
     }
 
+    const overdueAllocations = overdueAllocationsRes?.val ?? 0;
+
     return NextResponse.json({
       data: {
         totalAssets: totalAssetsRes?.val ?? 0,
         activeAllocations: activeAllocationsRes?.val ?? 0,
-        overdueAllocations: overdueAllocationsRes?.val ?? 0,
+        overdueAllocations,
         pendingTransfers: pendingTransfersRes?.val ?? 0,
         maintenanceRequests: maintenanceRequestsRes?.val ?? 0,
+        availableCount: availableCountRes?.val ?? 0,
+        allocatedCount: allocatedCountRes?.val ?? 0,
+        maintenanceTodayCount: maintenanceTodayRes?.val ?? 0,
+        activeBookingsCount: activeBookingsRes?.val ?? 0,
+        upcomingReturnsCount: upcomingReturnsRes?.val ?? 0,
+        overdueReturnsCount: overdueAllocations,
         recentMaintenance,
         recentTransfers: enrichedTransfers,
       },

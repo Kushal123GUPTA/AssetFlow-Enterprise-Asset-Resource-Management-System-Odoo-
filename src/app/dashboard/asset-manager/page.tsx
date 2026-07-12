@@ -14,6 +14,8 @@ import {
   XCircle,
   ArrowRight,
   RefreshCw,
+  Calendar,
+  AlertTriangle,
 } from "lucide-react";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
@@ -25,6 +27,12 @@ interface DashboardStats {
   overdueAllocations: number;
   pendingTransfers: number;
   maintenanceRequests: number;
+  availableCount: number;
+  allocatedCount: number;
+  maintenanceTodayCount: number;
+  activeBookingsCount: number;
+  upcomingReturnsCount: number;
+  overdueReturnsCount: number;
   recentMaintenance: Array<{
     id: string;
     issueDescription: string;
@@ -94,20 +102,36 @@ export default function AssetManagerDashboard() {
 
   const KPI_CARDS = [
     {
-      label: "Total Assets",
-      value: stats?.totalAssets ?? 0,
-      change: "In catalog",
+      label: "Available",
+      value: stats?.availableCount ?? 0,
+      change: "Ready to allocate",
       icon: Package,
       color: "from-blue-500 to-cyan-500",
       bg: "bg-blue-500/10 border-blue-500/20",
     },
     {
-      label: "Active Allocations",
-      value: stats?.activeAllocations ?? 0,
-      change: `${stats?.overdueAllocations ?? 0} overdue`,
+      label: "Allocated",
+      value: stats?.allocatedCount ?? 0,
+      change: "In use",
       icon: GitMerge,
       color: "from-emerald-500 to-teal-500",
       bg: "bg-emerald-500/10 border-emerald-500/20",
+    },
+    {
+      label: "Maintenance",
+      value: stats?.maintenanceTodayCount ?? 0,
+      change: "Under maintenance",
+      icon: Wrench,
+      color: "from-amber-500 to-orange-500",
+      bg: "bg-amber-500/10 border-amber-500/20",
+    },
+    {
+      label: "Active Bookings",
+      value: stats?.activeBookingsCount ?? 0,
+      change: "Upcoming / ongoing",
+      icon: Calendar,
+      color: "from-rose-500 to-pink-600",
+      bg: "bg-rose-500/10 border-rose-500/20",
     },
     {
       label: "Pending Transfers",
@@ -118,17 +142,19 @@ export default function AssetManagerDashboard() {
       bg: "bg-violet-500/10 border-violet-500/20",
     },
     {
-      label: "Maintenance Requests",
-      value: stats?.maintenanceRequests ?? 0,
-      change: "Open tickets",
-      icon: Wrench,
-      color: "from-amber-500 to-orange-500",
-      bg: "bg-amber-500/10 border-amber-500/20",
+      label: "Upcoming Returns",
+      value: stats?.upcomingReturnsCount ?? 0,
+      change: "Expected on or after today",
+      icon: RotateCcw,
+      color: "from-teal-500 to-cyan-500",
+      bg: "bg-teal-500/10 border-teal-500/20",
     },
   ];
 
   const QUICK_LINKS = [
     { label: "Register Asset", href: "/dashboard/asset-manager/assets", icon: Package, desc: "Add new assets to the registry", badge: null },
+    { label: "Book Resource", href: "/dashboard/employee/bookings", icon: Calendar, desc: "Reserve a shared resource", badge: null },
+    { label: "Raise Maintenance", href: "/dashboard/employee/maintenance", icon: Wrench, desc: "Report an issue for repair", badge: null },
     { label: "Allocate Assets", href: "/dashboard/asset-manager/allocations", icon: GitMerge, desc: "Assign assets to employees or departments", badge: null },
     {
       label: "Approve Transfers",
@@ -171,8 +197,33 @@ export default function AssetManagerDashboard() {
         </button>
       </div>
 
+      {/* Overdue returns banner */}
+      {!loading && (stats?.overdueReturnsCount ?? stats?.overdueAllocations ?? 0) > 0 && (
+        <div className="flex flex-col gap-3 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3.5 sm:flex-row sm:items-center">
+          <div className="flex min-w-0 flex-1 items-start gap-3">
+            <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-amber-100 text-amber-800">
+              <AlertTriangle className="h-4 w-4" />
+            </div>
+            <div className="min-w-0">
+              <p className="text-sm font-bold text-amber-950">
+                {stats?.overdueReturnsCount ?? stats?.overdueAllocations ?? 0} assets overdue for return
+              </p>
+              <p className="mt-0.5 text-xs text-amber-900/80 font-medium">
+                Follow up on allocations past their expected return date.
+              </p>
+            </div>
+          </div>
+          <Link
+            href="/dashboard/asset-manager/returns"
+            className="shrink-0 text-xs font-bold text-amber-900 hover:text-amber-700"
+          >
+            Review returns →
+          </Link>
+        </div>
+      )}
+
       {/* KPI Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
         {KPI_CARDS.map((kpi) => {
           const Icon = kpi.icon;
           return (
@@ -192,15 +243,15 @@ export default function AssetManagerDashboard() {
         })}
       </div>
 
-      {/* Module Quick Links */}
+      {/* Quick Actions */}
       <div>
-        <h2 className="text-gray-100 font-bold mb-4 text-base">Asset Management Modules</h2>
+        <h2 className="text-gray-100 font-bold mb-4 text-base">Quick Actions</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {QUICK_LINKS.map((link) => {
             const Icon = link.icon;
             return (
               <Link
-                key={link.href}
+                key={`${link.href}-${link.label}`}
                 href={link.href}
                 className="group flex items-center gap-4 p-5 rounded-2xl bg-gray-900 border border-gray-800 hover:border-blue-500/50 hover:bg-gray-800/80 transition-all duration-200"
               >

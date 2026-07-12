@@ -33,7 +33,7 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json();
-    const { name, categoryId, serialNumber, acquisitionDate, acquisitionCost, condition, location, departmentId, isBookable, photoUrl } = body;
+    const { name, categoryId, serialNumber, acquisitionDate, acquisitionCost, condition, location, departmentId, isBookable, photoUrl, documents } = body;
 
     if (!name || !categoryId) {
       return NextResponse.json({ error: "Name and Category are required" }, { status: 400 });
@@ -62,7 +62,7 @@ export async function POST(req: NextRequest) {
         photoUrl: photoUrl || null,
         status: "available",
         customFields: {},
-        documents: [],
+        documents: Array.isArray(documents) ? documents : [],
         createdBy: session.user.id,
         updatedBy: session.user.id,
       })
