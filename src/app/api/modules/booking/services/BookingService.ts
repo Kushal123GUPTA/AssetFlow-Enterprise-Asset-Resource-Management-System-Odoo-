@@ -3,6 +3,7 @@ import { db } from "@/db";
 import { assetCategories, assets, resourceBookings } from "@/db/schema";
 import { isExclusionViolation } from "@/lib/apiAuth";
 import { notifyEmployee } from "@/lib/notifications";
+import { logActivity } from "@/lib/activityLog";
 
 function deriveBookingStatus(
   startTime: string,
@@ -183,6 +184,14 @@ export class BookingService {
         relatedEntityType: "resource_booking",
         relatedEntityId: created.id,
       });
+      await logActivity({
+        organizationId,
+        employeeId,
+        action: "booking_created",
+        entityType: "resource_booking",
+        entityId: created.id,
+        details: { assetId: input.assetId },
+      });
       return { data: created };
     } catch (error) {
       if (isExclusionViolation(error) || isUniqueViolationLike(error)) {
@@ -232,6 +241,20 @@ export class BookingService {
       message: `Booking cancelled${reason ? `: ${reason}` : "."}`,
       relatedEntityType: "resource_booking",
       relatedEntityId: bookingId,
+    });
+
+    const [assetRow] = await db
+      .select({ organizationId: assets.organizationId })
+      .from(assets)
+      .where(eq(assets.id, booking.assetId))
+      .limit(1);
+    await logActivity({
+      organizationId: assetRow?.organizationId ?? "",
+      employeeId,
+      action: "booking_cancelled",
+      entityType: "resource_booking",
+      entityId: bookingId,
+      details: reason ? { reason } : undefined,
     });
 
     return { data: updated };

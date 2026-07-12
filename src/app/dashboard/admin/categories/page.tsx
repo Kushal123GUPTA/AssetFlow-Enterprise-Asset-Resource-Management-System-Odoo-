@@ -43,16 +43,50 @@ export default function CategoriesPage() {
 
   useEffect(() => { load(); }, []);
 
-  const openCreate = () => { setEditing(null); form.resetFields(); setModalOpen(true); };
+  const openCreate = () => {
+    setEditing(null);
+    form.resetFields();
+    form.setFieldsValue({ customFieldRows: [] });
+    setModalOpen(true);
+  };
   const openEdit = (row: Category) => {
     setEditing(row);
-    form.setFieldsValue({ name: row.name, parentCategoryId: row.parentCategoryId });
+    const schema = row.customFieldsSchema ?? {};
+    const customFieldRows = Object.entries(schema).map(([key, val]) => ({
+      key,
+      type: typeof val === "object" && val && "type" in (val as object)
+        ? String((val as { type?: string }).type ?? "text")
+        : "text",
+      label:
+        typeof val === "object" && val && "label" in (val as object)
+          ? String((val as { label?: string }).label ?? key)
+          : key,
+    }));
+    form.setFieldsValue({
+      name: row.name,
+      parentCategoryId: row.parentCategoryId,
+      customFieldRows,
+    });
     setModalOpen(true);
   };
 
   const handleSubmit = async () => {
     const values = await form.validateFields();
-    const res = editing ? await API.update(editing.id, values) : await API.create(values);
+    const customFieldsSchema: Record<string, { type: string; label: string }> = {};
+    for (const row of values.customFieldRows ?? []) {
+      const key = String(row.key ?? "").trim();
+      if (!key) continue;
+      customFieldsSchema[key] = {
+        type: row.type || "text",
+        label: row.label || key,
+      };
+    }
+    const payload = {
+      name: values.name,
+      parentCategoryId: values.parentCategoryId ?? null,
+      customFieldsSchema,
+    };
+    const res = editing ? await API.update(editing.id, payload) : await API.create(payload);
     if (res.error) { message.error(res.error); return; }
     message.success(editing ? "Category updated" : "Category created");
     setModalOpen(false);
@@ -156,7 +190,7 @@ export default function CategoriesPage() {
         okButtonProps={{ className: "bg-[#ff6b00] hover:bg-[#e05e00] border-none" }}
         destroyOnHidden
         centered
-        width={450}
+        width={560}
       >
         <Form form={form} layout="vertical" className="mt-6">
           <Form.Item name="name" label={<span className="font-medium text-[#111827]">Category Name</span>} rules={[{ required: true, message: "Required" }]}>
@@ -169,6 +203,48 @@ export default function CategoriesPage() {
               ))}
             </Select>
           </Form.Item>
+          <div className="mb-2">
+            <p className="font-medium text-[#111827] mb-2">Category-specific fields</p>
+            <p className="text-xs text-[#6b7280] mb-3">
+              Optional fields for this category (e.g. warranty period for Electronics).
+            </p>
+            <Form.List name="customFieldRows">
+              {(fields, { add, remove }) => (
+                <div className="space-y-2">
+                  {fields.map((field) => (
+                    <div key={field.key} className="flex gap-2 items-start">
+                      <Form.Item
+                        {...field}
+                        name={[field.name, "key"]}
+                        rules={[{ required: true, message: "Key" }]}
+                        className="!mb-0 flex-1"
+                      >
+                        <Input placeholder="key (e.g. warranty_months)" />
+                      </Form.Item>
+                      <Form.Item {...field} name={[field.name, "label"]} className="!mb-0 flex-1">
+                        <Input placeholder="Label" />
+                      </Form.Item>
+                      <Form.Item {...field} name={[field.name, "type"]} className="!mb-0 w-28" initialValue="text">
+                        <Select
+                          options={[
+                            { value: "text", label: "Text" },
+                            { value: "number", label: "Number" },
+                            { value: "date", label: "Date" },
+                          ]}
+                        />
+                      </Form.Item>
+                      <Button type="text" danger onClick={() => remove(field.name)}>
+                        Remove
+                      </Button>
+                    </div>
+                  ))}
+                  <Button type="dashed" block onClick={() => add({ key: "", label: "", type: "text" })}>
+                    + Add field
+                  </Button>
+                </div>
+              )}
+            </Form.List>
+          </div>
         </Form>
       </Modal>
     </PageShell>

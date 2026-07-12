@@ -1,3 +1,1 @@
-export default function OrganizationSetupPage(){
-    return null;
-}
+export { default } from "@/app/dashboard/admin/organization/page";

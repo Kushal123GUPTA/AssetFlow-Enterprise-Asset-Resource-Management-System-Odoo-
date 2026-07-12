@@ -52,6 +52,8 @@ export async function POST(req: NextRequest) {
           ilike(assets.name, `%${search}%`),
           ilike(assets.assetTag, `%${search}%`),
           ilike(assets.serialNumber, `%${search}%`),
+          ilike(assets.qrCode, `%${search}%`),
+          ilike(assets.location, `%${search}%`),
         )!
       );
     }

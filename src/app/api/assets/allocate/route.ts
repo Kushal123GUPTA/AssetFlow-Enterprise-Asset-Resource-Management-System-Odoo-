@@ -5,6 +5,7 @@ import { db } from "@/db";
 import { assets, assetAllocations, assetStatusHistory } from "@/db/schema";
 import { eq, and, isNull } from "drizzle-orm";
 import { notifyEmployee } from "@/lib/notifications";
+import { logActivity } from "@/lib/activityLog";
 
 // POST /api/assets/allocate — Allocate an asset
 export async function POST(req: NextRequest) {
@@ -83,6 +84,15 @@ export async function POST(req: NextRequest) {
         relatedEntityId: insertedAllocation[0].id,
       });
     }
+
+    await logActivity({
+      organizationId,
+      employeeId: session.user.id,
+      action: "asset_allocated",
+      entityType: "allocation",
+      entityId: insertedAllocation[0].id,
+      details: { assetId, employeeId: employeeId || null, departmentId: departmentId || null },
+    });
 
     return NextResponse.json({ data: insertedAllocation[0] });
   } catch (error: any) {

@@ -34,6 +34,12 @@ export default function AssetFormModal({ open, onClose, onSubmit, categories, de
         departmentId: editAsset.departmentId ?? undefined,
         isBookable: editAsset.isBookable,
         photoUrl: editAsset.photoUrl ?? "",
+        documents: Array.isArray(editAsset.documents)
+          ? (editAsset.documents as Array<{ name?: string; url?: string }>).map((d) => ({
+              name: d.name ?? "",
+              url: d.url ?? "",
+            }))
+          : [],
       });
       setPhotoPreview(editAsset.photoUrl ?? null);
     } else if (open) {
@@ -43,6 +49,9 @@ export default function AssetFormModal({ open, onClose, onSubmit, categories, de
   }, [open, editAsset, form]);
 
   const handleFinish = async (values: any) => {
+    const docs = Array.isArray(values.documents)
+      ? values.documents.filter((d: { name?: string; url?: string }) => d?.name && d?.url)
+      : [];
     const data: AssetFormData = {
       name: values.name,
       categoryId: values.categoryId,
@@ -54,6 +63,7 @@ export default function AssetFormModal({ open, onClose, onSubmit, categories, de
       departmentId: values.departmentId || undefined,
       isBookable: values.isBookable ?? false,
       photoUrl: values.photoUrl || undefined,
+      documents: docs,
     };
 
     const success = await onSubmit(data);
@@ -190,13 +200,57 @@ export default function AssetFormModal({ open, onClose, onSubmit, categories, de
           <Switch checkedChildren="Yes" unCheckedChildren="No" />
         </Form.Item>
 
+        <div className="mb-4">
+          <p className="text-sm font-medium text-gray-400 mb-2">Documents</p>
+          <Form.List name="documents">
+            {(fields, { add, remove }) => (
+              <div className="space-y-2">
+                {fields.map((field) => (
+                  <div key={field.key} className="flex gap-2 items-start">
+                    <Form.Item
+                      {...field}
+                      name={[field.name, "name"]}
+                      rules={[{ required: true, message: "Name required" }]}
+                      className="!mb-0 flex-1"
+                    >
+                      <Input placeholder="Document name" />
+                    </Form.Item>
+                    <Form.Item
+                      {...field}
+                      name={[field.name, "url"]}
+                      rules={[{ required: true, message: "URL required" }]}
+                      className="!mb-0 flex-[2]"
+                    >
+                      <Input placeholder="https://… or file link" />
+                    </Form.Item>
+                    <button
+                      type="button"
+                      onClick={() => remove(field.name)}
+                      className="mt-1 h-8 w-8 rounded-lg border border-gray-700 text-gray-400 hover:text-red-400"
+                    >
+                      <X className="w-3.5 h-3.5 mx-auto" />
+                    </button>
+                  </div>
+                ))}
+                <button
+                  type="button"
+                  onClick={() => add({ name: "", url: "" })}
+                  className="text-xs text-primary hover:underline"
+                >
+                  + Add document
+                </button>
+              </div>
+            )}
+          </Form.List>
+        </div>
+
         {/* QR Code Info */}
         <div className="rounded-xl border border-gray-700 bg-gray-900 px-4 py-3">
           <p className="text-xs text-gray-500">
-            <span className="font-semibold text-gray-400">📱 QR Code:</span>{" "}
+            <span className="font-semibold text-gray-400">QR Code:</span>{" "}
             {isEdit
-              ? "The QR code was auto-generated when this asset was registered. View it in the asset details."
-              : "A unique QR code will be auto-generated from the asset tag after registration."
+              ? "The QR code was auto-generated when this asset was registered. View it in the asset details. Search also matches QR values."
+              : "A unique QR code will be auto-generated from the asset tag after registration (searchable)."
             }
           </p>
         </div>
