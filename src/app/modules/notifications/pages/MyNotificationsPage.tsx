@@ -1,29 +1,44 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
-import { Bell, CheckCheck, Loader2 } from "lucide-react";
+import { Bell, CheckCheck, Loader2, Trash2 } from "lucide-react";
 import { notificationService } from "../services/NotificationService";
 import type { EmployeeNotification } from "../types/notification.types";
+import type { NotificationFilterTab } from "@/lib/notificationTypes";
 import { ApiError } from "@/lib/fetchJson";
 import PageHeader, { PageShell } from "@/app/shared/components/PageHeader";
+import NotificationFilters from "../components/NotificationFilters";
 
-export default function MyNotificationsPage() {
+type Props = {
+  backHref?: string;
+};
+
+export default function MyNotificationsPage({ backHref = "/dashboard" }: Props) {
   const [items, setItems] = useState<EmployeeNotification[]>([]);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const [filter, setFilter] = useState<NotificationFilterTab>("all");
+  const [unreadOnly, setUnreadOnly] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
-  const refresh = async () => {
-    const data = await notificationService.listMine();
-    setItems(data);
-  };
+  const refresh = useCallback(async () => {
+    const res = await notificationService.listMine({
+      filter,
+      unreadOnly,
+      limit: 100,
+    });
+    setItems(res.data);
+    setUnreadCount(res.meta.unreadCount);
+  }, [filter, unreadOnly]);
 
   useEffect(() => {
     let cancelled = false;
     (async () => {
       try {
         setLoading(true);
+        setError(null);
         await refresh();
       } catch (e) {
         if (!cancelled) {
@@ -36,7 +51,7 @@ export default function MyNotificationsPage() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [refresh]);
 
   async function onMarkRead(id: string) {
     setError(null);
@@ -64,14 +79,25 @@ export default function MyNotificationsPage() {
     }
   }
 
-  const unreadCount = items.filter((n) => !n.isRead).length;
+  async function onDelete(id: string) {
+    setError(null);
+    setBusy(true);
+    try {
+      await notificationService.softDelete(id);
+      await refresh();
+    } catch (e) {
+      setError(e instanceof ApiError ? e.message : "Failed to delete notification");
+    } finally {
+      setBusy(false);
+    }
+  }
 
   return (
     <PageShell>
       <PageHeader
-        eyebrow="My workspace"
+        eyebrow="Inbox"
         title="Notifications"
-        description={`Updates about your assets, bookings, maintenance, and requests${
+        description={`Updates about assets, bookings, maintenance, and requests${
           unreadCount > 0 ? ` · ${unreadCount} unread` : ""
         }`}
         actions={
@@ -87,6 +113,13 @@ export default function MyNotificationsPage() {
             </button>
           ) : undefined
         }
+      />
+
+      <NotificationFilters
+        value={filter}
+        onChange={setFilter}
+        unreadOnly={unreadOnly}
+        onUnreadOnlyChange={setUnreadOnly}
       />
 
       {loading && (
@@ -131,26 +164,37 @@ export default function MyNotificationsPage() {
                   {new Date(n.createdAt).toLocaleString()}
                 </p>
               </div>
-              {!n.isRead && (
+              <div className="flex shrink-0 items-center gap-2">
+                {!n.isRead && (
+                  <button
+                    type="button"
+                    disabled={busy}
+                    onClick={() => onMarkRead(n.id)}
+                    className="text-xs px-3 py-1.5 rounded-xl bg-primary-light text-primary border border-primary/20 disabled:opacity-50"
+                  >
+                    Mark read
+                  </button>
+                )}
                 <button
                   type="button"
                   disabled={busy}
-                  onClick={() => onMarkRead(n.id)}
-                  className="shrink-0 text-xs px-3 py-1.5 rounded-xl bg-primary-light text-primary border border-primary/20 disabled:opacity-50"
+                  onClick={() => onDelete(n.id)}
+                  className="inline-flex items-center justify-center h-8 w-8 rounded-xl border border-gray-800 text-gray-500 hover:text-red-400 hover:border-red-400/40 disabled:opacity-50"
+                  aria-label="Delete notification"
                 >
-                  Mark read
+                  <Trash2 className="h-3.5 w-3.5" />
                 </button>
-              )}
+              </div>
             </div>
           </div>
         ))}
       </div>
 
       <Link
-        href="/dashboard/employee"
+        href={backHref}
         className="inline-block text-xs text-gray-500 hover:text-gray-300"
       >
-        ← Back to dashboard
+        ← Back
       </Link>
     </PageShell>
   );

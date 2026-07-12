@@ -224,7 +224,7 @@ export default function EmployeeDashboardPage() {
             )}
           </div>
           <Link
-            href="/dashboard/employee/notifications"
+            href="/dashboard/notifications"
             className="inline-flex items-center gap-2 self-start sm:self-auto rounded-xl border border-gray-800 bg-gray-900 px-3.5 py-2 text-sm font-semibold text-gray-200 shadow-sm hover:border-primary/40 hover:text-primary transition-colors"
           >
             <Bell className="w-4 h-4" />

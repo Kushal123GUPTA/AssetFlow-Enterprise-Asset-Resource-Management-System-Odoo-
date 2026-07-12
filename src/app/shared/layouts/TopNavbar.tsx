@@ -1,21 +1,41 @@
 "use client";
 
 import Link from "next/link";
+import { useCallback, useEffect, useState } from "react";
 import { useSession, signOut } from "next-auth/react";
 import { Bell, LogOut } from "lucide-react";
 import { Popover } from "antd";
 
 export default function TopNavbar() {
-  const { data: session } = useSession();
+  const { data: session, status } = useSession();
   const role = (session?.user?.role ?? "employee") as string;
-  const notificationsHref =
-    role === "employee"
-      ? "/dashboard/employee/notifications"
-      : "/dashboard/admin";
+  const [unreadCount, setUnreadCount] = useState(0);
+
+  const loadUnread = useCallback(async () => {
+    if (status !== "authenticated") {
+      setUnreadCount(0);
+      return;
+    }
+    try {
+      const res = await fetch("/api/notifications/unread-count", {
+        cache: "no-store",
+      });
+      if (!res.ok) return;
+      const json = await res.json();
+      setUnreadCount(Number(json?.data?.unreadCount ?? 0));
+    } catch {
+      // badge is best-effort
+    }
+  }, [status]);
+
+  useEffect(() => {
+    loadUnread();
+    const id = window.setInterval(loadUnread, 60_000);
+    return () => window.clearInterval(id);
+  }, [loadUnread]);
 
   const popoverContent = (
     <div className="p-4 w-64 space-y-4">
-      {/* Profile Header */}
       <div className="flex items-center gap-3">
         <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary text-lg font-bold text-white shadow-md shadow-primary/20">
           {session?.user?.name?.[0]?.toUpperCase() ?? "A"}
@@ -30,13 +50,11 @@ export default function TopNavbar() {
         </div>
       </div>
 
-      {/* User Information */}
       <div className="border-t border-gray-200 pt-3 text-xs space-y-1">
         <p className="font-bold text-gray-500 uppercase tracking-wider text-[9px]">Email Address</p>
         <p className="text-gray-200 truncate font-semibold text-xs">{session?.user?.email || "—"}</p>
       </div>
 
-      {/* Action Footer */}
       <div className="border-t border-gray-200 pt-3">
         <button
           type="button"
@@ -52,18 +70,24 @@ export default function TopNavbar() {
 
   return (
     <header className="sticky top-0 z-30 flex h-16 shrink-0 items-center justify-end border-b border-gray-800 bg-gray-900 px-4 shadow-sm sm:h-20 sm:px-8">
-
       <div className="ml-4 flex items-center gap-3 sm:gap-4">
         <Link
-          href={notificationsHref}
+          href="/dashboard/notifications"
           className="relative flex h-10 w-10 items-center justify-center rounded-xl bg-gray-950 text-gray-500 transition-all hover:bg-gray-800 hover:text-primary"
-          aria-label="Notifications"
+          aria-label={
+            unreadCount > 0
+              ? `Notifications, ${unreadCount} unread`
+              : "Notifications"
+          }
         >
           <Bell className="h-4 w-4" />
-          <span className="absolute top-2 right-2 h-2 w-2 rounded-full bg-primary ring-1 ring-gray-900" />
+          {unreadCount > 0 && (
+            <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-primary text-[10px] font-bold text-white flex items-center justify-center ring-1 ring-gray-900">
+              {unreadCount > 99 ? "99+" : unreadCount}
+            </span>
+          )}
         </Link>
 
-        {/* Profile popover trigger */}
         <Popover content={popoverContent} trigger="hover" placement="bottomRight" arrow>
           <div className="flex items-center gap-3 border-l border-gray-800 pl-3 sm:pl-4 cursor-pointer group py-1.5 px-2.5 rounded-xl hover:bg-gray-950 transition-all duration-150">
             <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary text-sm font-bold text-white shadow-sm shadow-primary/20 group-hover:scale-105 transition-transform">
