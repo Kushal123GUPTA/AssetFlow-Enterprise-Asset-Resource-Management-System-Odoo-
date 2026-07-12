@@ -203,31 +203,7 @@ export default function AdminDashboard() {
         })}
       </div>
 
-      {/* Module Quick Links */}
-      <div>
-        <h2 className="text-gray-100 font-bold mb-4 text-base">Administrative Modules</h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-          {QUICK_LINKS.map((link) => {
-            const Icon = link.icon;
-            return (
-              <Link
-                key={link.href}
-                href={link.href}
-                className="group flex items-center gap-4 p-5 rounded-2xl bg-gray-900 border border-gray-800 hover:border-blue-500/50 hover:bg-gray-800/80 transition-all duration-200"
-              >
-                <div className="w-11 h-11 rounded-xl bg-blue-500/15 border border-blue-500/20 flex items-center justify-center shrink-0 group-hover:bg-blue-500/25 transition-colors">
-                  <Icon className="w-5 h-5 text-blue-400" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-gray-200 font-semibold text-sm group-hover:text-primary transition-colors">{link.label}</p>
-                  <p className="text-gray-500 text-xs mt-0.5 truncate font-medium">{link.desc}</p>
-                </div>
-                <ArrowRight className="w-4 h-4 text-gray-600 group-hover:text-blue-400 group-hover:translate-x-0.5 transition-all shrink-0" />
-              </Link>
-            );
-          })}
-        </div>
-      </div>
+
 
       {/* Recent Activity Panel */}
       <div className="rounded-2xl bg-gray-900 border border-gray-800 p-6">

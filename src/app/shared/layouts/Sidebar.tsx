@@ -34,7 +34,6 @@ const NAV_BY_ROLE: Record<string, NavItem[]> = {
     { label: "Audit Cycles", href: "/dashboard/admin/audit-cycles", icon: ClipboardList },
     { label: "Analytics", href: "/dashboard/admin/analytics", icon: BarChart3 },
     { label: "Activity Logs", href: "/dashboard/admin/activity", icon: ClipboardList },
-    { label: "Notifications", href: "/dashboard/notifications", icon: Bell },
   ],
   asset_manager: [
     { label: "Dashboard", href: "/dashboard/asset-manager", icon: LayoutDashboard },

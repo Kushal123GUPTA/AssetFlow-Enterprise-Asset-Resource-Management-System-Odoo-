@@ -72,7 +72,7 @@ export default function TopNavbar() {
     <header className="sticky top-0 z-30 flex h-16 shrink-0 items-center justify-end border-b border-gray-800 bg-gray-900 px-4 shadow-sm sm:h-20 sm:px-8">
       <div className="ml-4 flex items-center gap-3 sm:gap-4">
         <Link
-          href="/dashboard/notifications"
+          href={role === "admin" ? "/dashboard/admin/activity" : "/dashboard/notifications"}
           className="relative flex h-10 w-10 items-center justify-center rounded-xl bg-gray-950 text-gray-500 transition-all hover:bg-gray-800 hover:text-primary"
           aria-label={
             unreadCount > 0
