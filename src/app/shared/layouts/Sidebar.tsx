@@ -78,7 +78,7 @@ export default function Sidebar() {
   const navItems = NAV_BY_ROLE[role] ?? NAV_BY_ROLE.employee;
 
   return (
-    <aside className="z-20 flex w-64 shrink-0 flex-col border-r border-gray-800 bg-gray-900 min-h-screen">
+    <aside className="z-20 flex h-screen w-64 shrink-0 sticky top-0 flex-col overflow-hidden border-r border-gray-800 bg-gray-900">
       <div className="mt-2 flex h-20 items-center px-6">
         <div className="flex items-center gap-3">
           <Image
