@@ -7,12 +7,8 @@ import type { BookableResource, MyBooking } from "../types/booking.types";
 import { ApiError } from "@/lib/fetchJson";
 import PageHeader, { PageShell } from "@/app/shared/components/PageHeader";
 import BookingCalendar from "../components/BookingCalendar";
-
-function toLocalInputValue(iso: string) {
-  const d = new Date(iso);
-  const pad = (n: number) => String(n).padStart(2, "0");
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
-}
+import { Select, DatePicker, Button, message as antdMessage } from "antd";
+import dayjs from "dayjs";
 
 export default function MyBookingsPage() {
   const [resources, setResources] = useState<BookableResource[]>([]);
@@ -95,9 +91,11 @@ export default function MyBookingsPage() {
         startTime: start.toISOString(),
         endTime: end.toISOString(),
       });
+      antdMessage.success("Booking created successfully!");
       setMessage("Booking created");
       setStartTime("");
       setEndTime("");
+      setSelectedAssetId("");
       await refresh(search);
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Failed to create booking");
@@ -111,6 +109,7 @@ export default function MyBookingsPage() {
     setMessage(null);
     try {
       await bookingService.cancel(id);
+      antdMessage.success("Booking cancelled");
       setMessage("Booking cancelled");
       await refresh(search);
     } catch (err) {
@@ -134,6 +133,7 @@ export default function MyBookingsPage() {
         startTime: start.toISOString(),
         endTime: end.toISOString(),
       });
+      antdMessage.success("Booking rescheduled");
       setMessage("Booking rescheduled");
       setRescheduleId(null);
       await refresh(search);
@@ -159,12 +159,12 @@ export default function MyBookingsPage() {
       />
 
       {message && (
-        <div className="rounded-xl border border-emerald-200 bg-emerald-50 text-emerald-800 text-sm p-4">
+        <div className="rounded-xl border border-emerald-250 bg-emerald-50 text-emerald-800 text-sm p-4 font-semibold">
           {message}
         </div>
       )}
       {error && (
-        <div className="rounded-xl border border-red-200 bg-red-50 text-red-700 text-sm p-4">
+        <div className="rounded-xl border border-red-200 bg-red-50 text-red-700 text-sm p-4 font-semibold">
           {error}
         </div>
       )}
@@ -174,11 +174,11 @@ export default function MyBookingsPage() {
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Search resources…"
-          className="flex-1 rounded-xl bg-gray-900 border border-gray-800 text-gray-100 px-3 py-2 text-sm"
+          className="flex-1 rounded-xl bg-gray-900 border border-gray-800 text-gray-100 px-4 py-2.5 text-sm"
         />
         <button
           type="submit"
-          className="px-4 py-2 rounded-xl bg-primary text-white text-sm font-semibold"
+          className="px-5 py-2.5 rounded-xl bg-primary hover:bg-primary-hover text-white text-sm font-bold border-none transition-colors cursor-pointer"
         >
           Search
         </button>
@@ -186,56 +186,75 @@ export default function MyBookingsPage() {
 
       <form
         onSubmit={createBooking}
-        className="rounded-2xl bg-gray-900 border border-gray-800 p-5 space-y-4"
+        className="rounded-2xl bg-gray-900 border border-gray-800 p-6 space-y-5"
       >
-        <h2 className="text-gray-200 font-semibold text-sm">Create booking</h2>
-        <label className="block text-sm text-gray-300">
-          Resource
-          <select
-            required
-            value={selectedAssetId}
-            onChange={(e) => setSelectedAssetId(e.target.value)}
-            className="mt-1 w-full rounded-xl bg-gray-950 border border-gray-700 text-gray-100 px-3 py-2 text-sm"
-          >
-            <option value="">Select resource…</option>
-            {resources.map((r) => (
-              <option key={r.id} value={r.id}>
-                {r.name} ({r.assetTag}){r.location ? ` · ${r.location}` : ""}
-              </option>
-            ))}
-          </select>
-        </label>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <label className="block text-sm text-gray-300">
-            Start
-            <input
-              type="datetime-local"
-              required
-              value={startTime}
-              onChange={(e) => setStartTime(e.target.value)}
-              className="mt-1 w-full rounded-xl bg-gray-950 border border-gray-700 text-gray-100 px-3 py-2 text-sm"
-            />
+        <h2 className="text-gray-100 font-extrabold text-base">Create Booking</h2>
+        
+        <div className="space-y-1">
+          <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">
+            Resource
           </label>
-          <label className="block text-sm text-gray-300">
-            End
-            <input
-              type="datetime-local"
-              required
-              value={endTime}
-              onChange={(e) => setEndTime(e.target.value)}
-              className="mt-1 w-full rounded-xl bg-gray-950 border border-gray-700 text-gray-100 px-3 py-2 text-sm"
-            />
-          </label>
+          <Select
+            showSearch
+            placeholder="Select a bookable resource..."
+            value={selectedAssetId || undefined}
+            onChange={(val) => setSelectedAssetId(val || "")}
+            className="w-full rounded-xl"
+            style={{ width: "100%" }}
+            size="large"
+            optionFilterProp="label"
+            options={resources.map((r) => ({
+              value: r.id,
+              label: `${r.name} (${r.assetTag})${r.location ? ` · ${r.location}` : ""}`,
+            }))}
+          />
         </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="space-y-1">
+            <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">
+              Start Time
+            </label>
+            <DatePicker
+              showTime={{ format: "HH:mm" }}
+              format="YYYY-MM-DD HH:mm"
+              placeholder="Select start date & time"
+              value={startTime ? dayjs(startTime) : null}
+              onChange={(val) => setStartTime(val ? val.toISOString() : "")}
+              className="w-full rounded-xl py-2.5"
+              style={{ width: "100%" }}
+              size="large"
+              disabledDate={(current) => current && current < dayjs().startOf("day")}
+            />
+          </div>
+          
+          <div className="space-y-1">
+            <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">
+              End Time
+            </label>
+            <DatePicker
+              showTime={{ format: "HH:mm" }}
+              format="YYYY-MM-DD HH:mm"
+              placeholder="Select end date & time"
+              value={endTime ? dayjs(endTime) : null}
+              onChange={(val) => setEndTime(val ? val.toISOString() : "")}
+              className="w-full rounded-xl py-2.5"
+              style={{ width: "100%" }}
+              size="large"
+              disabledDate={(current) => current && current < dayjs().startOf("day")}
+            />
+          </div>
+        </div>
+
         <button
           type="submit"
           disabled={submitting || resources.length === 0}
-          className="px-4 py-2 rounded-xl bg-primary text-white text-sm font-medium disabled:opacity-50"
+          className="px-6 py-3 rounded-xl bg-primary hover:bg-primary-hover text-white text-sm font-bold border-none transition-all disabled:opacity-50 disabled:cursor-not-allowed hover:scale-[1.01] cursor-pointer"
         >
           {submitting ? "Booking…" : "Book slot"}
         </button>
         {resources.length === 0 && (
-          <p className="text-gray-500 text-xs">No bookable resources found.</p>
+          <p className="text-gray-500 text-xs font-semibold">No bookable resources found.</p>
         )}
       </form>
 
@@ -249,35 +268,36 @@ export default function MyBookingsPage() {
         onPickSlot={(start, end) => {
           setStartTime(start);
           setEndTime(end);
+          antdMessage.info("Slot selected from calendar — review times and click book.");
           setMessage("Slot selected from calendar — review times and book.");
         }}
       />
 
-      <section className="rounded-2xl bg-gray-900 border border-gray-800 p-5">
-        <div className="flex items-center gap-2 mb-4">
+      <section className="rounded-2xl bg-gray-900 border border-gray-800 p-6">
+        <div className="flex items-center gap-2 mb-5">
           <Calendar className="w-4 h-4 text-primary" />
-          <h2 className="text-gray-200 font-semibold text-sm">My bookings</h2>
+          <h2 className="text-gray-100 font-extrabold text-base">My Bookings</h2>
         </div>
         {bookings.length === 0 ? (
-          <p className="text-gray-500 text-sm">You have no bookings yet.</p>
+          <p className="text-gray-500 text-sm font-semibold">You have no bookings yet.</p>
         ) : (
           <div className="space-y-3">
             {bookings.map((b) => (
               <div
                 key={b.id}
-                className="rounded-xl bg-gray-800/60 border border-gray-700/50 p-4"
+                className="rounded-xl bg-gray-800/40 border border-gray-700/50 p-4"
               >
                 <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
                   <div>
-                    <p className="text-gray-100 text-sm font-medium">
+                    <p className="text-gray-100 text-sm font-extrabold">
                       {b.assetName} ({b.assetTag})
                     </p>
-                    <p className="text-gray-400 text-xs mt-1">
+                    <p className="text-gray-400 text-xs font-semibold mt-1">
                       {new Date(b.startTime).toLocaleString()} –{" "}
                       {new Date(b.endTime).toLocaleString()}
                     </p>
-                    <span className="inline-block mt-2 text-xs bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded-full">
-                      {b.status.toUpperCase()}
+                    <span className="inline-block mt-2 text-xs font-bold bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded-full uppercase tracking-wider">
+                      {b.status}
                     </span>
                   </div>
                   {editableStatuses.has(b.status) && (
@@ -286,17 +306,17 @@ export default function MyBookingsPage() {
                         type="button"
                         onClick={() => {
                           setRescheduleId(b.id);
-                          setRescheduleStart(toLocalInputValue(b.startTime));
-                          setRescheduleEnd(toLocalInputValue(b.endTime));
+                          setRescheduleStart(b.startTime);
+                          setRescheduleEnd(b.endTime);
                         }}
-                        className="text-xs px-3 py-2 rounded-xl bg-primary-light text-primary border border-primary/20"
+                        className="text-xs px-3 py-2 rounded-xl bg-primary/10 text-primary border border-primary/20 hover:bg-primary/20 font-bold transition-all cursor-pointer"
                       >
                         Reschedule
                       </button>
                       <button
                         type="button"
                         onClick={() => cancelBooking(b.id)}
-                        className="text-xs px-3 py-2 rounded-xl bg-red-50 text-red-700 border border-red-200"
+                        className="text-xs px-3 py-2 rounded-xl bg-red-50 text-red-700 border border-red-250 hover:bg-red-100 font-bold transition-all cursor-pointer"
                       >
                         Cancel
                       </button>
@@ -304,27 +324,45 @@ export default function MyBookingsPage() {
                   )}
                 </div>
                 {rescheduleId === b.id && (
-                  <form onSubmit={submitReschedule} className="mt-3 grid grid-cols-1 sm:grid-cols-3 gap-2">
-                    <input
-                      type="datetime-local"
-                      required
-                      value={rescheduleStart}
-                      onChange={(e) => setRescheduleStart(e.target.value)}
-                      className="rounded-xl bg-gray-950 border border-gray-700 text-gray-100 px-3 py-2 text-sm"
-                    />
-                    <input
-                      type="datetime-local"
-                      required
-                      value={rescheduleEnd}
-                      onChange={(e) => setRescheduleEnd(e.target.value)}
-                      className="rounded-xl bg-gray-950 border border-gray-700 text-gray-100 px-3 py-2 text-sm"
-                    />
-                    <button
-                      type="submit"
-                      className="px-3 py-2 rounded-xl bg-primary text-white text-sm"
-                    >
-                      Save
-                    </button>
+                  <form onSubmit={submitReschedule} className="mt-4 p-4 rounded-xl bg-gray-950 border border-gray-800 space-y-3">
+                    <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider">Reschedule Booking</h4>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <DatePicker
+                        showTime={{ format: "HH:mm" }}
+                        format="YYYY-MM-DD HH:mm"
+                        placeholder="Start Time"
+                        value={rescheduleStart ? dayjs(rescheduleStart) : null}
+                        onChange={(val) => setRescheduleStart(val ? val.toISOString() : "")}
+                        className="rounded-xl w-full"
+                        style={{ width: "100%" }}
+                        disabledDate={(current) => current && current < dayjs().startOf("day")}
+                      />
+                      <DatePicker
+                        showTime={{ format: "HH:mm" }}
+                        format="YYYY-MM-DD HH:mm"
+                        placeholder="End Time"
+                        value={rescheduleEnd ? dayjs(rescheduleEnd) : null}
+                        onChange={(val) => setRescheduleEnd(val ? val.toISOString() : "")}
+                        className="rounded-xl w-full"
+                        style={{ width: "100%" }}
+                        disabledDate={(current) => current && current < dayjs().startOf("day")}
+                      />
+                    </div>
+                    <div className="flex justify-end gap-2 pt-2">
+                      <button
+                        type="button"
+                        onClick={() => setRescheduleId(null)}
+                        className="px-4 py-2 rounded-xl bg-gray-800 hover:bg-gray-700 text-gray-300 font-bold border-none transition-all cursor-pointer text-xs"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        type="submit"
+                        className="px-4 py-2 rounded-xl bg-primary hover:bg-primary-hover text-white font-bold border-none transition-all cursor-pointer text-xs"
+                      >
+                        Save
+                      </button>
+                    </div>
                   </form>
                 )}
               </div>
