@@ -78,7 +78,7 @@ export default function Sidebar() {
   const navItems = NAV_BY_ROLE[role] ?? NAV_BY_ROLE.employee;
 
   return (
-    <aside className="flex flex-col w-64 min-h-screen bg-white border-r border-gray-800 shrink-0 z-20">
+    <aside className="flex flex-col w-64 min-h-screen bg-white border-r border-[#f3f4f6] shrink-0 z-20">
       {/* Brand Logo Section */}
       <div className="h-20 flex items-center px-6 mt-2">
         <div className="flex items-center gap-3">
@@ -87,8 +87,8 @@ export default function Sidebar() {
             A
           </div>
           <div className="flex flex-col">
-            <span className="text-xl font-black text-gray-900 tracking-tight leading-none">AssetFlow</span>
-            <span className="text-[10px] font-bold text-gray-400 tracking-widest uppercase mt-1">
+            <span className="text-xl font-black text-[#111827] tracking-tight leading-none">AssetFlow</span>
+            <span className="text-[10px] font-bold text-[#6b7280] tracking-widest uppercase mt-1">
               {ROLE_LABELS[role]}
             </span>
           </div>
@@ -104,19 +104,19 @@ export default function Sidebar() {
       </div>
 
       {/* User Info Widget */}
-      <div className="flex items-center gap-3 px-4 py-3 mx-3 mb-4 rounded-xl bg-gray-50 border border-gray-800">
+      <div className="flex items-center gap-3 px-4 py-3 mx-3 mb-4 rounded-xl bg-gray-50 border border-[#f3f4f6]">
         <div className="flex items-center justify-center w-9 h-9 rounded-full bg-primary-light text-primary font-bold text-sm shrink-0">
           {session?.user?.name?.[0]?.toUpperCase() ?? "U"}
         </div>
         <div className="min-w-0">
           <p className="text-gray-800 text-sm font-semibold truncate leading-tight">{session?.user?.name ?? "User"}</p>
-          <p className="text-gray-400 text-xs truncate mt-0.5">{session?.user?.email ?? ""}</p>
+          <p className="text-[#6b7280] text-xs truncate mt-0.5">{session?.user?.email ?? ""}</p>
         </div>
       </div>
 
       {/* Nav Menu */}
       <nav className="flex-1 px-3 pt-2 pb-2 space-y-1 overflow-y-auto custom-scrollbar">
-        <p className="text-gray-400 text-[10px] font-bold uppercase tracking-wider px-3 mb-2">
+        <p className="text-[#6b7280] text-[10px] font-bold uppercase tracking-wider px-3 mb-2">
           Navigation
         </p>
         {navItems.map((item) => {
@@ -129,10 +129,10 @@ export default function Sidebar() {
               className={`group flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium transition-all duration-150 ${
                 isActive
                   ? `bg-primary-light text-primary font-bold shadow-sm`
-                  : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
+                  : "text-[#374151] hover:text-[#111827] hover:bg-gray-50"
               }`}
             >
-              <Icon className={`w-4 h-4 shrink-0 ${isActive ? "text-primary" : "text-gray-400 group-hover:text-gray-600"}`} />
+              <Icon className={`w-4 h-4 shrink-0 ${isActive ? "text-primary" : "text-[#6b7280] group-hover:text-[#374151]"}`} />
               <span className="flex-1">{item.label}</span>
               {isActive && <ChevronRight className="w-3.5 h-3.5 text-primary" />}
             </Link>
@@ -141,10 +141,10 @@ export default function Sidebar() {
       </nav>
 
       {/* Sign out */}
-      <div className="px-3 pb-5 border-t border-gray-800 pt-4">
+      <div className="px-3 pb-5 border-t border-[#f3f4f6] pt-4">
         <button
           onClick={() => signOut({ callbackUrl: "/login" })}
-          className="flex items-center gap-3 w-full px-4 py-2.5 rounded-xl text-sm font-medium text-gray-500 hover:text-red-500 hover:bg-red-50 transition-all duration-150"
+          className="flex items-center gap-3 w-full px-4 py-2.5 rounded-xl text-sm font-medium text-[#4b5563] hover:text-red-500 hover:bg-red-50 transition-all duration-150"
         >
           <LogOut className="w-4 h-4 shrink-0" />
           <span>Sign Out</span>

@@ -5,7 +5,7 @@ import TopNavbar from "./TopNavbar";
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="flex min-h-screen bg-gray-950">
+    <div className="flex min-h-screen bg-[#f8f9fa]">
       <Sidebar />
       <div className="flex flex-col flex-1 min-w-0">
         <TopNavbar />
