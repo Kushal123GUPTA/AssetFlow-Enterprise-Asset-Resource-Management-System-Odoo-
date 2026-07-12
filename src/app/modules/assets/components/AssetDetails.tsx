@@ -44,7 +44,7 @@ export default function AssetDetailsDrawer({ open, asset, onClose }: Props) {
         </div>
       }
       width={560}
-      destroyOnClose
+      destroyOnHidden
     >
       {detailsLoading ? (
         <div className="flex items-center justify-center py-20">

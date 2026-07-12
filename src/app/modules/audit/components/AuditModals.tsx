@@ -61,7 +61,7 @@ export function CreateAuditCycleModal({ open, onClose, onSubmit, employees, depa
       confirmLoading={submitting}
       okText="Create Campaign"
       width={500}
-      destroyOnClose
+      destroyOnHidden
     >
       <Form form={form} layout="vertical" onFinish={handleFinish} className="mt-4">
         <Form.Item
@@ -146,7 +146,7 @@ export function VerifyAssetModal({ open, onClose, onSubmit, assetName, assetTag 
       confirmLoading={submitting}
       okText="Submit Status"
       width={400}
-      destroyOnClose
+      destroyOnHidden
     >
       <Form form={form} layout="vertical" onFinish={handleFinish} className="mt-4">
         <Form.Item

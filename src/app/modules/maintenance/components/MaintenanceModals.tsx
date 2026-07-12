@@ -38,7 +38,7 @@ export function AssignTechnicianModal({ open, onClose, onSubmit }: AssignProps) 
       onOk={() => form.submit()}
       okText="Assign"
       width={400}
-      destroyOnClose
+      destroyOnHidden
     >
       <Form form={form} layout="vertical" onFinish={handleFinish} className="mt-4">
         <Form.Item
@@ -99,7 +99,7 @@ export function ResolveMaintenanceModal({ open, onClose, onSubmit }: ResolveProp
       onOk={() => form.submit()}
       okText="Complete Resolution"
       width={450}
-      destroyOnClose
+      destroyOnHidden
     >
       <Form form={form} layout="vertical" onFinish={handleFinish} className="mt-4">
         <Form.Item
@@ -181,7 +181,7 @@ export function RaiseMaintenanceModal({ open, onClose, onSubmit }: RaiseProps) {
       onOk={() => form.submit()}
       okText="Submit Request"
       width={480}
-      destroyOnClose
+      destroyOnHidden
     >
       <Form form={form} layout="vertical" onFinish={handleFinish} className="mt-4">
         <Form.Item

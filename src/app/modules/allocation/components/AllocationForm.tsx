@@ -109,7 +109,7 @@ export default function AllocationFormModal({ open, onClose, onSubmit, employees
       title="Allocate Asset"
       onCancel={() => { form.resetFields(); onClose(); }}
       width={500}
-      destroyOnClose
+      destroyOnHidden
       footer={[
         <Button key="cancel" onClick={() => { form.resetFields(); onClose(); }}>
           Cancel

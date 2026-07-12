@@ -1,6 +1,6 @@
 "use client";
 
-import { Button, message } from "antd";
+import { Button, App } from "antd";
 import { DownloadOutlined } from "@ant-design/icons";
 
 type Props = {
@@ -48,6 +48,7 @@ export default function ReportExportActions({
   maintenance = [],
   assets = {},
 }: Props) {
+  const { message } = App.useApp();
   const onExportJson = () => {
     downloadJson(`assetflow-analytics-${new Date().toISOString().slice(0, 10)}.json`, {
       exportedAt: new Date().toISOString(),

@@ -61,7 +61,7 @@ export default function ReturnFormModal({ open, onClose, onSubmit, allocation }:
       onOk={() => form.submit()}
       okText="Return Asset"
       width={480}
-      destroyOnClose
+      destroyOnHidden
     >
       <Form form={form} layout="vertical" onFinish={handleFinish} className="mt-4">
         <Form.Item name="actualReturnDate" label="Return Date" rules={[{ required: true, message: "Please select return date" }]}>

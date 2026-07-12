@@ -154,7 +154,7 @@ export default function CategoriesPage() {
         onCancel={() => setModalOpen(false)}
         okText={editing ? "Save" : "Create"}
         okButtonProps={{ className: "bg-[#ff6b00] hover:bg-[#e05e00] border-none" }}
-        destroyOnClose
+        destroyOnHidden
         centered
         width={450}
       >
