@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { SIDEBAR_ROUTES, RouteItem } from "../constants/routes";
 import { LogoutOutlined, PlusOutlined } from "@ant-design/icons";
@@ -51,10 +52,14 @@ export default function Sidebar() {
       {/* Brand Logo Section */}
       <div className="h-20 flex items-center px-6 mt-2">
         <div className="flex items-center gap-3">
-          {/* Stylized Orange Logo (SubMan-style) */}
-          <div className="w-10 h-10 bg-primary rounded-xl flex items-center justify-center text-white font-black text-2xl shadow-md shadow-primary/20 transform rotate-6">
-            A
-          </div>
+          <Image
+            src="/brand/icon.png"
+            alt="AssetFlow"
+            width={40}
+            height={40}
+            className="rounded-xl shadow-md shadow-primary/20 rotate-6"
+            priority
+          />
           <div className="flex flex-col">
             <span className="text-xl font-black text-gray-900 tracking-tight leading-none">AssetFlow</span>
             <span className="text-[10px] font-bold text-gray-400 tracking-widest uppercase mt-1">Enterprise</span>

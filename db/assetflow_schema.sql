@@ -268,6 +268,8 @@ CREATE TABLE transfer_requests (
     to_employee_id          UUID REFERENCES employees(id),
     to_department_id        UUID REFERENCES departments(id),
     requested_by             UUID NOT NULL REFERENCES employees(id),
+    reason                   TEXT,
+    notes                    TEXT,
     status                   transfer_status NOT NULL DEFAULT 'requested',
     approved_by               UUID REFERENCES employees(id),
     approved_at                TIMESTAMPTZ,
@@ -283,6 +285,42 @@ CREATE TABLE transfer_requests (
 
 CREATE INDEX idx_transfers_asset ON transfer_requests(asset_id) WHERE deleted_at IS NULL;
 CREATE INDEX idx_transfers_status ON transfer_requests(status) WHERE deleted_at IS NULL;
+-- One open transfer request per active allocation (employee-initiated)
+CREATE UNIQUE INDEX uq_one_open_transfer_per_allocation
+    ON transfer_requests(current_allocation_id)
+    WHERE status = 'requested' AND deleted_at IS NULL AND current_allocation_id IS NOT NULL;
+
+-- Employee initiates a return; Asset Manager approves and completes check-in separately.
+CREATE TYPE return_request_status AS ENUM ('requested', 'approved', 'rejected', 'completed');
+
+CREATE TABLE return_requests (
+    id                      UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    asset_id                UUID NOT NULL REFERENCES assets(id) ON DELETE CASCADE,
+    allocation_id           UUID NOT NULL REFERENCES asset_allocations(id),
+    requested_by            UUID NOT NULL REFERENCES employees(id),
+    reason                  TEXT,
+    condition_notes         TEXT,
+    preferred_return_date   DATE,
+    attachment_url          TEXT,
+    remarks                 TEXT,
+    status                  return_request_status NOT NULL DEFAULT 'requested',
+    approved_by             UUID REFERENCES employees(id),
+    approved_at             TIMESTAMPTZ,
+    rejection_reason        TEXT,
+    created_at              TIMESTAMPTZ NOT NULL DEFAULT now(),
+    created_by              UUID REFERENCES employees(id),
+    updated_at              TIMESTAMPTZ NOT NULL DEFAULT now(),
+    updated_by              UUID REFERENCES employees(id),
+    deleted_at              TIMESTAMPTZ,
+    deleted_by              UUID REFERENCES employees(id)
+);
+
+CREATE INDEX idx_return_requests_asset ON return_requests(asset_id) WHERE deleted_at IS NULL;
+CREATE INDEX idx_return_requests_status ON return_requests(status) WHERE deleted_at IS NULL;
+CREATE INDEX idx_return_requests_requested_by ON return_requests(requested_by) WHERE deleted_at IS NULL;
+CREATE UNIQUE INDEX uq_one_open_return_per_allocation
+    ON return_requests(allocation_id)
+    WHERE status = 'requested' AND deleted_at IS NULL;
 
 -- ============================================================================
 -- 6. RESOURCE BOOKINGS (shared/bookable assets, time-sliced)
@@ -337,6 +375,7 @@ CREATE TABLE maintenance_requests (
     id                      UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     asset_id                UUID NOT NULL REFERENCES assets(id) ON DELETE CASCADE,
     raised_by                UUID NOT NULL REFERENCES employees(id),
+    issue_title              TEXT,
     issue_description         TEXT NOT NULL,
     priority                   maintenance_priority NOT NULL DEFAULT 'medium',
     photo_url                    TEXT,
@@ -518,7 +557,7 @@ DECLARE
 BEGIN
     FOREACH t IN ARRAY ARRAY[
         'organizations','departments','employees','asset_categories','assets',
-        'asset_allocations','transfer_requests','resource_bookings',
+        'asset_allocations','transfer_requests','return_requests','resource_bookings',
         'maintenance_requests','audit_cycles','audit_items','discrepancy_reports'
     ]
     LOOP

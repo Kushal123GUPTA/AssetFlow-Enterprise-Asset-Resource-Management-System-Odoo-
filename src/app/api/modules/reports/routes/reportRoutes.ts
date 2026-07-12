@@ -1,2 +1,1 @@
-// TODO:
-// This file will be implemented manually.
+// TODO: This file will be implemented manually.

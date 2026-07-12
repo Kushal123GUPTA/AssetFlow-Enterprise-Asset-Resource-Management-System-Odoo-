@@ -1,22 +1,79 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { 
-  Building2, Tag, ClipboardList, Users, BarChart3, Package, 
-  ArrowRight, AlertTriangle, ArrowLeftRight, CalendarCheck, RotateCcw, Plus
+import {
+  Building2,
+  Tag,
+  ClipboardList,
+  Users,
+  BarChart3,
+  Package,
+  AlertTriangle,
+  ArrowLeftRight,
+  CalendarCheck,
+  RotateCcw,
+  ArrowRight,
+  Loader2,
+  Sparkles,
 } from "lucide-react";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
-import { Spin, message } from "antd";
+import { message } from "antd";
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
+import Card from "@/app/shared/components/Card";
+import { PageShell } from "@/app/shared/components/PageHeader";
 
 dayjs.extend(relativeTime);
+
+const QUICK_LINKS = [
+  {
+    label: "Departments",
+    href: "/dashboard/admin/departments",
+    icon: Building2,
+    desc: "Org structure & heads",
+  },
+  {
+    label: "Categories",
+    href: "/dashboard/admin/categories",
+    icon: Tag,
+    desc: "Asset category tree",
+  },
+  {
+    label: "Employees",
+    href: "/dashboard/admin/employees",
+    icon: Users,
+    desc: "Directory & roles",
+  },
+  {
+    label: "Audit cycles",
+    href: "/dashboard/admin/audit-cycles",
+    icon: ClipboardList,
+    desc: "Plan and close audits",
+  },
+  {
+    label: "Analytics",
+    href: "/dashboard/admin/analytics",
+    icon: BarChart3,
+    desc: "Utilization insights",
+  },
+] as const;
 
 export default function AdminDashboard() {
   const { data: session } = useSession();
   const [loading, setLoading] = useState(true);
   const [metrics, setMetrics] = useState<any>(null);
+  const [todayLabel, setTodayLabel] = useState("");
+
+  useEffect(() => {
+    setTodayLabel(
+      new Date().toLocaleDateString(undefined, {
+        weekday: "long",
+        month: "long",
+        day: "numeric",
+      })
+    );
+  }, []);
 
   useEffect(() => {
     const fetchDashboard = async () => {
@@ -35,118 +92,212 @@ export default function AdminDashboard() {
     fetchDashboard();
   }, []);
 
+  const firstName = session?.user?.name?.split(" ")[0] ?? "Admin";
+
   const kpis = [
-    { label: "Available", value: metrics?.availableCount || 0, icon: Package, color: "text-[#10b981]" },
-    { label: "Allocated", value: metrics?.allocatedCount || 0, icon: Users, color: "text-[#3b82f6]" },
-    { label: "Maintenance", value: metrics?.maintenanceCount || 0, icon: AlertTriangle, color: "text-[#f59e0b]" },
-    { label: "Active Bookings", value: metrics?.activeBookingsCount || 0, icon: CalendarCheck, color: "text-[#8b5cf6]" },
-    { label: "Pending Transfers", value: metrics?.pendingTransfersCount || 0, icon: ArrowLeftRight, color: "text-[#ec4899]" },
-    { label: "Upcoming Returns", value: metrics?.upcomingReturnsCount || 0, icon: RotateCcw, color: "text-[#06b6d4]" },
+    {
+      label: "Available",
+      value: metrics?.availableCount ?? "—",
+      icon: Package,
+      hint: "Ready to allocate",
+    },
+    {
+      label: "Allocated",
+      value: metrics?.allocatedCount ?? "—",
+      icon: Users,
+      hint: "In use",
+    },
+    {
+      label: "Maintenance",
+      value: metrics?.maintenanceCount ?? "—",
+      icon: AlertTriangle,
+      hint: "Open tickets",
+    },
+    {
+      label: "Bookings",
+      value: metrics?.activeBookingsCount ?? "—",
+      icon: CalendarCheck,
+      hint: "Active now",
+    },
+    {
+      label: "Transfers",
+      value: metrics?.pendingTransfersCount ?? "—",
+      icon: ArrowLeftRight,
+      hint: "Pending approval",
+    },
+    {
+      label: "Returns due",
+      value: metrics?.upcomingReturnsCount ?? "—",
+      icon: RotateCcw,
+      hint: "Coming up",
+    },
   ];
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-[60vh]">
-        <Spin size="large" />
-      </div>
-    );
-  }
-
   return (
-    <div className="space-y-8 max-w-7xl mx-auto p-2">
-      {/* Header */}
-      <div className="bg-[#ffffff] p-8 rounded-2xl border border-[#e5e7eb] shadow-sm flex items-center justify-between flex-wrap gap-4">
-        <div>
-          <h1 className="text-3xl font-bold text-[#111827]">
-            Welcome back, <span className="text-[#ff6b00]">{session?.user?.name?.split(" ")[0]}</span> 👋
-          </h1>
-          <p className="text-[#6b7280] mt-2 text-base">
-            Administrator · Organization Overview
-          </p>
-        </div>
-        
-        <div className="flex items-center gap-3">
-           <button className="h-11 px-4 bg-[#ffffff] hover:bg-[#f8f9fa] border border-[#e5e7eb] text-[#111827] rounded-xl font-bold transition-all flex items-center gap-2">
-            <CalendarCheck className="w-4 h-4" />
-            Book Resource
-          </button>
-          <button className="h-11 px-4 bg-[#ffffff] hover:bg-[#f8f9fa] border border-[#e5e7eb] text-[#111827] rounded-xl font-bold transition-all flex items-center gap-2">
-            <AlertTriangle className="w-4 h-4" />
-            Raise Request
-          </button>
-          <button className="h-11 px-6 bg-[#ff6b00] hover:bg-[#e05e00] text-white border-none rounded-xl font-bold shadow-lg shadow-[#ff6b00]/20 flex items-center gap-2 transition-all hover:scale-[1.02]">
-            <Plus className="w-4 h-4" />
-            Register Asset
-          </button>
-        </div>
-      </div>
-
-      {metrics?.overdueReturnsCount > 0 && (
-        <div className="bg-[#fef2f2] border border-[#fca5a5] p-5 rounded-2xl flex items-center gap-4">
-          <div className="w-10 h-10 rounded-full bg-[#fee2e2] flex items-center justify-center shrink-0">
-             <AlertTriangle className="w-5 h-5 text-[#ef4444]" />
-          </div>
+    <PageShell className="space-y-7">
+      <section className="relative overflow-hidden rounded-3xl border border-primary/15 bg-gradient-to-br from-primary-light via-gray-900 to-gray-900 p-6 sm:p-7">
+        <div className="pointer-events-none absolute -right-8 -top-10 h-36 w-36 rounded-full bg-primary/10 blur-2xl" />
+        <div className="relative flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <h3 className="text-[#991b1b] font-bold text-lg">{metrics.overdueReturnsCount} assets overdue for return</h3>
-            <p className="text-[#b91c1c] text-sm">Flagged for immediate followup with respective employees.</p>
+            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-primary">
+              Administrator workspace
+            </p>
+            <h1 className="mt-2 text-3xl font-black tracking-tight text-gray-100">
+              Hello, {firstName}
+            </h1>
+            <p className="mt-1.5 text-sm text-gray-500">
+              {todayLabel || "Organization overview"}
+            </p>
           </div>
+          <Link
+            href="/dashboard/admin/analytics"
+            className="inline-flex items-center gap-2 self-start rounded-xl border border-gray-800 bg-gray-900 px-3.5 py-2 text-sm font-semibold text-gray-200 shadow-sm transition-colors hover:border-primary/40 hover:text-primary sm:self-auto"
+          >
+            <BarChart3 className="h-4 w-4" />
+            Analytics
+          </Link>
+        </div>
+      </section>
+
+      {loading && (
+        <div className="flex items-center gap-2 text-sm text-gray-500">
+          <Loader2 className="h-4 w-4 animate-spin text-primary" />
+          Loading organization overview…
         </div>
       )}
 
-      {/* Today's Overview (KPI Cards) */}
-      <div>
-        <h2 className="text-[#111827] text-xl font-bold mb-6">Today&apos;s Overview</h2>
-        <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
-          {kpis.map((kpi) => {
-            const Icon = kpi.icon;
-            return (
-              <div key={kpi.label} className={`rounded-xl border p-5 bg-[#ffffff] shadow-sm hover:shadow-md transition-shadow`}>
-                <p className="text-[#6b7280] text-xs font-semibold uppercase tracking-wider mb-2">{kpi.label}</p>
-                <div className="flex items-center justify-between">
-                  <p className="text-3xl font-black text-[#111827]">{kpi.value}</p>
-                  <Icon className={`w-6 h-6 ${kpi.color} opacity-80`} />
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* Recent Activity */}
-      <div className="bg-[#ffffff] p-8 rounded-2xl border border-[#e5e7eb] shadow-sm">
-        <h2 className="text-[#111827] text-xl font-bold mb-6">Recent Activity</h2>
-        
-        {metrics?.recentActivity?.length > 0 ? (
-          <div className="space-y-4">
-            {metrics.recentActivity.map((log: any) => (
-              <div key={log.id} className="flex items-start gap-4 p-4 rounded-xl hover:bg-[#f8f9fa] border border-transparent hover:border-[#e5e7eb] transition-all">
-                 <div className="w-10 h-10 rounded-full bg-[#f3f4f6] flex items-center justify-center shrink-0 mt-1">
-                   {log.action.includes("allocated") ? <Users className="w-4 h-4 text-[#3b82f6]" /> :
-                    log.action.includes("transfer") ? <ArrowLeftRight className="w-4 h-4 text-[#ec4899]" /> :
-                    log.action.includes("maintenance") ? <AlertTriangle className="w-4 h-4 text-[#f59e0b]" /> :
-                    <Package className="w-4 h-4 text-[#6b7280]" />}
-                 </div>
-                 <div className="flex-1 min-w-0">
-                    <p className="text-[#111827] font-medium text-base">
-                      {log.details?.assetName ? <span className="font-bold">{log.details.assetName}</span> : "Asset"} - {log.action.replace(/_/g, " ")}
-                    </p>
-                    <p className="text-[#6b7280] text-sm mt-1 line-clamp-1">
-                      {log.details?.reason || log.details?.notes || `Entity: ${log.entityType}`}
-                    </p>
-                 </div>
-                 <div className="text-right shrink-0">
-                    <p className="text-[#6b7280] text-sm">{dayjs(log.createdAt).fromNow()}</p>
-                 </div>
-              </div>
-            ))}
+      {!loading && metrics?.overdueReturnsCount > 0 && (
+        <section className="flex flex-col gap-3 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3.5 sm:flex-row sm:items-center">
+          <div className="flex min-w-0 flex-1 items-start gap-3">
+            <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-amber-100 text-amber-800">
+              <AlertTriangle className="h-4 w-4" />
+            </div>
+            <div className="min-w-0">
+              <p className="text-sm font-semibold text-amber-950">
+                {metrics.overdueReturnsCount} assets overdue for return
+              </p>
+              <p className="mt-0.5 text-xs text-amber-900/80">
+                Flagged for follow-up with the assigned employees.
+              </p>
+            </div>
           </div>
-        ) : (
-          <div className="text-center py-10 text-[#6b7280]">
-            No recent activity recorded today.
-          </div>
-        )}
-      </div>
+        </section>
+      )}
 
-    </div>
+      {!loading && (
+        <>
+          <section>
+            <div className="mb-3 flex items-center justify-between">
+              <h2 className="text-sm font-bold text-gray-100">At a glance</h2>
+              <span className="flex items-center gap-1 text-[11px] text-gray-500">
+                <Sparkles className="h-3 w-3 text-primary" />
+                Live organization metrics
+              </span>
+            </div>
+            <div className="grid grid-cols-2 gap-3 lg:grid-cols-3 xl:grid-cols-6">
+              {kpis.map((kpi) => {
+                const Icon = kpi.icon;
+                return (
+                  <div
+                    key={kpi.label}
+                    className="rounded-2xl border border-gray-800 bg-gray-900 p-4 transition-all hover:border-primary/40 hover:shadow-md hover:shadow-primary/5"
+                  >
+                    <div className="flex items-start justify-between gap-2">
+                      <p className="text-[11px] font-semibold uppercase tracking-wide text-gray-500">
+                        {kpi.label}
+                      </p>
+                      <span className="rounded-lg bg-primary-light p-1.5 text-primary">
+                        <Icon className="h-3.5 w-3.5" />
+                      </span>
+                    </div>
+                    <p className="mt-2 text-3xl font-black tracking-tight text-gray-100">
+                      {kpi.value}
+                    </p>
+                    <p className="mt-1 text-xs text-gray-500">{kpi.hint}</p>
+                  </div>
+                );
+              })}
+            </div>
+          </section>
+
+          <section>
+            <h2 className="mb-3 text-sm font-bold text-gray-100">Quick links</h2>
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
+              {QUICK_LINKS.map((action) => {
+                const Icon = action.icon;
+                return (
+                  <Link
+                    key={action.href}
+                    href={action.href}
+                    className="group flex items-center gap-3.5 rounded-2xl border border-gray-800 bg-gray-900 p-4 transition-all hover:border-primary/30 hover:bg-primary-light/50"
+                  >
+                    <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-primary/20 bg-primary-light text-primary">
+                      <Icon className="h-5 w-5" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-bold text-gray-100 transition-colors group-hover:text-primary">
+                        {action.label}
+                      </p>
+                      <p className="mt-0.5 text-xs leading-snug text-gray-500">
+                        {action.desc}
+                      </p>
+                    </div>
+                    <ArrowRight className="h-4 w-4 shrink-0 text-gray-500 transition-all group-hover:translate-x-0.5 group-hover:text-primary" />
+                  </Link>
+                );
+              })}
+            </div>
+          </section>
+
+          <Card>
+            <h2 className="mb-4 text-sm font-bold text-gray-100">Recent activity</h2>
+            {metrics?.recentActivity?.length > 0 ? (
+              <div className="space-y-2.5">
+                {metrics.recentActivity.map((log: any) => (
+                  <div
+                    key={log.id}
+                    className="flex items-start gap-3 rounded-xl border border-gray-800 bg-gray-950 p-3.5 transition-colors hover:border-primary/25"
+                  >
+                    <div className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary-light text-primary">
+                      {log.action?.includes("allocated") ? (
+                        <Users className="h-4 w-4" />
+                      ) : log.action?.includes("transfer") ? (
+                        <ArrowLeftRight className="h-4 w-4" />
+                      ) : log.action?.includes("maintenance") ? (
+                        <AlertTriangle className="h-4 w-4" />
+                      ) : (
+                        <Package className="h-4 w-4" />
+                      )}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-medium text-gray-100">
+                        {log.details?.assetName ? (
+                          <span className="font-bold">{log.details.assetName}</span>
+                        ) : (
+                          "Asset"
+                        )}{" "}
+                        — {String(log.action ?? "").replace(/_/g, " ")}
+                      </p>
+                      <p className="mt-0.5 line-clamp-1 text-xs text-gray-500">
+                        {log.details?.reason ||
+                          log.details?.notes ||
+                          `Entity: ${log.entityType}`}
+                      </p>
+                    </div>
+                    <p className="shrink-0 text-xs text-gray-500">
+                      {dayjs(log.createdAt).fromNow()}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="rounded-xl border border-dashed border-gray-700 bg-gray-950 px-4 py-8 text-center text-sm text-gray-500">
+                No recent activity recorded today.
+              </div>
+            )}
+          </Card>
+        </>
+      )}
+    </PageShell>
   );
 }

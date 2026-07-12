@@ -8,6 +8,8 @@ import {
   PlusOutlined, EditOutlined, DeleteOutlined, UserOutlined, KeyOutlined,
 } from "@ant-design/icons";
 import type { ColumnsType } from "antd/es/table";
+import Card from "@/app/shared/components/Card";
+import PageHeader, { PageShell } from "@/app/shared/components/PageHeader";
 
 type Role = "admin" | "asset_manager" | "department_head" | "employee";
 type Status = "active" | "inactive";
@@ -181,23 +183,23 @@ export default function EmployeesPage() {
   ];
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto p-4 md:p-8">
-      {/* Header */}
-      <div className="bg-[#ffffff] p-6 rounded-2xl border border-[#e5e7eb] shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-[#111827] flex items-center gap-2">
-            <KeyOutlined className="text-[#ff6b00]" /> Employees &amp; Role Assignment
-          </h1>
-          <p className="text-[#6b7280] text-sm mt-1">
-            Manage the employee directory and assign roles securely.
-          </p>
-        </div>
-        <Button type="primary" size="large" icon={<PlusOutlined />} onClick={openCreate} className="bg-[#ff6b00] hover:bg-[#e05e00] border-none shadow-md">
-          Add Employee
-        </Button>
-      </div>
+    <PageShell>
+      <PageHeader
+        eyebrow="Organization"
+        title={
+          <span className="inline-flex items-center gap-2">
+            <KeyOutlined className="text-primary" /> Employees &amp; Role Assignment
+          </span>
+        }
+        description="Manage the employee directory and assign roles securely."
+        actions={
+          <Button type="primary" size="large" icon={<PlusOutlined />} onClick={openCreate} className="border-none bg-primary shadow-md hover:bg-primary-hover">
+            Add Employee
+          </Button>
+        }
+      />
 
-      <div className="bg-[#ffffff] rounded-2xl border border-[#e5e7eb] shadow-sm p-6 space-y-6">
+      <Card className="space-y-6">
         {/* Controls */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <Input.Search
@@ -213,9 +215,9 @@ export default function EmployeesPage() {
             {(Object.entries(ROLE_LABEL) as [Role, string][]).map(([role, label]) => {
               const cnt = employees.filter((e) => e.role === role).length;
               return (
-                <div key={role} className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-[#e5e7eb] bg-[#f8f9fa]">
+                <div key={role} className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-gray-800 bg-gray-950">
                   <Tag color={ROLE_COLOR[role]} className="m-0 border-none font-medium">{label}</Tag>
-                  <span className="font-bold text-[#111827]">{cnt}</span>
+                  <span className="font-bold text-gray-100">{cnt}</span>
                 </div>
               );
             })}
@@ -230,9 +232,9 @@ export default function EmployeesPage() {
           loading={loading}
           pagination={{ pageSize: 15, showSizeChanger: true }}
           bordered={false}
-          className="border border-[#e5e7eb] rounded-xl overflow-hidden"
+          className="overflow-hidden rounded-xl border border-gray-800"
         />
-      </div>
+      </Card>
 
       <Modal
         title={
@@ -287,6 +289,6 @@ export default function EmployeesPage() {
           )}
         </Form>
       </Modal>
-    </div>
+    </PageShell>
   );
 }

@@ -11,6 +11,7 @@ export const bookingStatus = pgEnum("booking_status", ['upcoming', 'ongoing', 'c
 export const maintenancePriority = pgEnum("maintenance_priority", ['low', 'medium', 'high', 'critical'])
 export const maintenanceStatus = pgEnum("maintenance_status", ['pending', 'approved', 'rejected', 'technician_assigned', 'in_progress', 'resolved'])
 export const transferStatus = pgEnum("transfer_status", ['requested', 'approved', 'rejected'])
+export const returnRequestStatus = pgEnum("return_request_status", ['requested', 'approved', 'rejected', 'completed'])
 export const userRole = pgEnum("user_role", ['admin', 'asset_manager', 'department_head', 'employee'])
 export const userStatus = pgEnum("user_status", ['active', 'inactive'])
 
@@ -349,6 +350,8 @@ export const transferRequests = pgTable("transfer_requests", {
 	toEmployeeId: uuid("to_employee_id"),
 	toDepartmentId: uuid("to_department_id"),
 	requestedBy: uuid("requested_by").notNull(),
+	reason: text(),
+	notes: text(),
 	status: transferStatus().default('requested').notNull(),
 	approvedBy: uuid("approved_by"),
 	approvedAt: timestamp("approved_at", { withTimezone: true, mode: 'string' }),
@@ -362,6 +365,7 @@ export const transferRequests = pgTable("transfer_requests", {
 }, (table) => [
 	index("idx_transfers_asset").using("btree", table.assetId.asc().nullsLast().op("uuid_ops")).where(sql`(deleted_at IS NULL)`),
 	index("idx_transfers_status").using("btree", table.status.asc().nullsLast().op("enum_ops")).where(sql`(deleted_at IS NULL)`),
+	uniqueIndex("uq_one_open_transfer_per_allocation").using("btree", table.currentAllocationId.asc().nullsLast().op("uuid_ops")).where(sql`((status = 'requested'::transfer_status) AND (deleted_at IS NULL) AND (current_allocation_id IS NOT NULL))`),
 	foreignKey({
 			columns: [table.assetId],
 			foreignColumns: [assets.id],
@@ -425,6 +429,68 @@ export const transferRequests = pgTable("transfer_requests", {
 	check("transfer_requests_check", sql`(to_employee_id IS NOT NULL) OR (to_department_id IS NOT NULL)`),
 ]);
 
+export const returnRequests = pgTable("return_requests", {
+	id: uuid().defaultRandom().primaryKey().notNull(),
+	assetId: uuid("asset_id").notNull(),
+	allocationId: uuid("allocation_id").notNull(),
+	requestedBy: uuid("requested_by").notNull(),
+	reason: text(),
+	conditionNotes: text("condition_notes"),
+	preferredReturnDate: date("preferred_return_date"),
+	attachmentUrl: text("attachment_url"),
+	remarks: text(),
+	status: returnRequestStatus().default('requested').notNull(),
+	approvedBy: uuid("approved_by"),
+	approvedAt: timestamp("approved_at", { withTimezone: true, mode: 'string' }),
+	rejectionReason: text("rejection_reason"),
+	createdAt: timestamp("created_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
+	createdBy: uuid("created_by"),
+	updatedAt: timestamp("updated_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
+	updatedBy: uuid("updated_by"),
+	deletedAt: timestamp("deleted_at", { withTimezone: true, mode: 'string' }),
+	deletedBy: uuid("deleted_by"),
+}, (table) => [
+	index("idx_return_requests_asset").using("btree", table.assetId.asc().nullsLast().op("uuid_ops")).where(sql`(deleted_at IS NULL)`),
+	index("idx_return_requests_status").using("btree", table.status.asc().nullsLast().op("enum_ops")).where(sql`(deleted_at IS NULL)`),
+	index("idx_return_requests_requested_by").using("btree", table.requestedBy.asc().nullsLast().op("uuid_ops")).where(sql`(deleted_at IS NULL)`),
+	uniqueIndex("uq_one_open_return_per_allocation").using("btree", table.allocationId.asc().nullsLast().op("uuid_ops")).where(sql`((status = 'requested'::return_request_status) AND (deleted_at IS NULL))`),
+	foreignKey({
+			columns: [table.assetId],
+			foreignColumns: [assets.id],
+			name: "return_requests_asset_id_fkey"
+		}).onDelete("cascade"),
+	foreignKey({
+			columns: [table.allocationId],
+			foreignColumns: [assetAllocations.id],
+			name: "return_requests_allocation_id_fkey"
+		}),
+	foreignKey({
+			columns: [table.requestedBy],
+			foreignColumns: [employees.id],
+			name: "return_requests_requested_by_fkey"
+		}),
+	foreignKey({
+			columns: [table.approvedBy],
+			foreignColumns: [employees.id],
+			name: "return_requests_approved_by_fkey"
+		}),
+	foreignKey({
+			columns: [table.createdBy],
+			foreignColumns: [employees.id],
+			name: "return_requests_created_by_fkey"
+		}),
+	foreignKey({
+			columns: [table.updatedBy],
+			foreignColumns: [employees.id],
+			name: "return_requests_updated_by_fkey"
+		}),
+	foreignKey({
+			columns: [table.deletedBy],
+			foreignColumns: [employees.id],
+			name: "return_requests_deleted_by_fkey"
+		}),
+]);
+
 export const resourceBookings = pgTable("resource_bookings", {
 	id: uuid().defaultRandom().primaryKey().notNull(),
 	assetId: uuid("asset_id").notNull(),
@@ -481,6 +547,7 @@ export const maintenanceRequests = pgTable("maintenance_requests", {
 	id: uuid().defaultRandom().primaryKey().notNull(),
 	assetId: uuid("asset_id").notNull(),
 	raisedBy: uuid("raised_by").notNull(),
+	issueTitle: text("issue_title"),
 	issueDescription: text("issue_description").notNull(),
 	priority: maintenancePriority().default('medium').notNull(),
 	photoUrl: text("photo_url"),
